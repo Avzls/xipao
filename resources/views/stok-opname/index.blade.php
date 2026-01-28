@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('page-title', 'Stock Opname')
-@section('page-subtitle', 'Rekonsiliasi stok gudang')
+@section('page-subtitle', 'Rekonsiliasi stok besar')
 
 @section('header-actions')
     <a href="{{ route('stok-opname.create') }}" class="btn btn-primary">
@@ -70,7 +70,7 @@
                             <td class="text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     @if(!$opname->is_adjusted && $opname->selisih != 0)
-                                        <form action="{{ route('stok-opname.adjust', $opname) }}" method="POST" class="inline" onsubmit="return confirm('Sesuaikan stok gudang dengan hasil opname?')">
+                                        <form action="{{ route('stok-opname.adjust', $opname) }}" method="POST" class="inline" onsubmit="return confirm('Sesuaikan stok besar dengan hasil opname?')">
                                             @csrf
                                             <button type="submit" class="text-emerald-600 hover:text-emerald-800" title="Sesuaikan Stok">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

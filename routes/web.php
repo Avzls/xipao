@@ -7,6 +7,7 @@ use App\Http\Controllers\WarungController;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\StokController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\OperasionalController;
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -23,6 +24,9 @@ Route::middleware('auth')->group(function () {
     
     // Transaksi
     Route::resource('transaksi', TransaksiController::class);
+    
+    // Operasional
+    Route::resource('operasional', OperasionalController::class)->except(['show']);
     
     // Stock Besar (Items + Stock + Opname)
     Route::get('/stok', [StokController::class, 'index'])->name('stok.index');

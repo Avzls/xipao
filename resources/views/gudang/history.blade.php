@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('page-title', 'History Restok')
-@section('page-subtitle', 'Riwayat restok gudang')
+@section('page-subtitle', 'Riwayat restok besar')
 
 @section('content')
 <div class="space-y-6">

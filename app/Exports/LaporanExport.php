@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Warung;
 use App\Models\TransaksiHarian;
+use App\Models\PengeluaranOperasional;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -12,17 +13,19 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Carbon\Carbon;
 
-class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTitle, ShouldAutoSize
+class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTitle, ShouldAutoSize, WithColumnFormatting
 {
-    protected $bulan;
-    protected $tahun;
+    protected $tanggalAwal;
+    protected $tanggalAkhir;
 
-    public function __construct($bulan, $tahun)
+    public function __construct($tanggalAwal, $tanggalAkhir)
     {
-        $this->bulan = $bulan;
-        $this->tahun = $tahun;
+        $this->tanggalAwal = $tanggalAwal;
+        $this->tanggalAkhir = $tanggalAkhir;
     }
 
     public function collection()
@@ -31,34 +34,37 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
         
         $data = $warungs->map(function ($warung) {
             $transaksi = TransaksiHarian::where('warung_id', $warung->id)
-                ->whereMonth('tanggal', $this->bulan)
-                ->whereYear('tanggal', $this->tahun);
+                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
+            
+            $operasional = PengeluaranOperasional::where('warung_id', $warung->id)
+                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
+                ->sum('nominal');
             
             $omset = $transaksi->sum('omset');
-            $modal = $transaksi->sum('modal');
+            $profit = $omset - $operasional;
             
             return [
                 'warung' => $warung->nama_warung,
-                'dimsum' => number_format($transaksi->sum('dimsum_terjual'), 0, ',', '.'),
-                'omset' => number_format($omset, 0, ',', '.'),
-                'modal' => number_format($modal, 0, ',', '.'),
-                'profit' => number_format($omset - $modal, 0, ',', '.'),
+                'dimsum' => $transaksi->sum('dimsum_terjual'),
+                'omset' => $omset,
+                'operasional' => $operasional,
+                'profit' => $profit,
                 'hari_kerja' => $transaksi->count(),
             ];
         });
 
         // Add totals row
-        $totalOmset = $data->sum(fn($d) => (int) str_replace('.', '', $d['omset']));
-        $totalModal = $data->sum(fn($d) => (int) str_replace('.', '', $d['modal']));
-        $totalProfit = $data->sum(fn($d) => (int) str_replace('.', '', $d['profit']));
-        $totalDimsum = $data->sum(fn($d) => (int) str_replace('.', '', $d['dimsum']));
+        $totalOmset = $data->sum('omset');
+        $totalOperasional = $data->sum('operasional');
+        $totalProfit = $data->sum('profit');
+        $totalDimsum = $data->sum('dimsum');
         
         $data->push([
             'warung' => 'TOTAL',
-            'dimsum' => number_format($totalDimsum, 0, ',', '.'),
-            'omset' => number_format($totalOmset, 0, ',', '.'),
-            'modal' => number_format($totalModal, 0, ',', '.'),
-            'profit' => number_format($totalProfit, 0, ',', '.'),
+            'dimsum' => $totalDimsum,
+            'omset' => $totalOmset,
+            'operasional' => $totalOperasional,
+            'profit' => $totalProfit,
             'hari_kerja' => '',
         ]);
 
@@ -69,18 +75,26 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
     {
         return [
             'Warung',
-            'Dimsum Terjual',
+            'Dimsum',
             'Omset (Rp)',
-            'Modal (Rp)',
+            'Operasional (Rp)',
             'Profit (Rp)',
             'Hari Kerja',
         ];
     }
 
+    public function columnFormats(): array
+    {
+        return [
+            'C' => '#,##0',
+            'D' => '#,##0',
+            'E' => '#,##0',
+        ];
+    }
+
     public function title(): string
     {
-        $namaBulan = \Carbon\Carbon::create()->month($this->bulan)->translatedFormat('F');
-        return "Laporan {$namaBulan} {$this->tahun}";
+        return "Laporan";
     }
 
     public function styles(Worksheet $sheet)
@@ -88,7 +102,6 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
         $lastRow = $sheet->getHighestRow();
         
         return [
-            // Header style
             1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => [
@@ -97,7 +110,6 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
                 ],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
-            // Total row style
             $lastRow => [
                 'font' => ['bold' => true],
                 'fill' => [

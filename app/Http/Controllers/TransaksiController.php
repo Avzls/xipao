@@ -27,7 +27,21 @@ class TransaksiController extends Controller
         $query->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun);
         
-        $transaksis = $query->paginate(15);
+        $transaksis = $query->paginate(50);
+        
+        // Prepare JSON data for Alpine.js table
+        $transaksiJson = collect($transaksis->items())->map(function($tx) {
+            return [
+                'id' => $tx->id,
+                'tanggal' => $tx->tanggal->format('Y-m-d'),
+                'tanggal_formatted' => $tx->tanggal->translatedFormat('d M Y'),
+                'warung' => $tx->warung->nama_warung,
+                'dimsum' => $tx->dimsum_terjual,
+                'cash' => $tx->cash,
+                'modal' => $tx->modal,
+                'omset' => $tx->omset,
+            ];
+        })->values();
         
         $summary = [
             'total_omset' => TransaksiHarian::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->sum('omset'),
@@ -35,7 +49,7 @@ class TransaksiController extends Controller
             'total_dimsum' => TransaksiHarian::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->sum('dimsum_terjual'),
         ];
         
-        return view('transaksi.index', compact('warungs', 'transaksis', 'summary', 'bulan', 'tahun'));
+        return view('transaksi.index', compact('warungs', 'transaksis', 'transaksiJson', 'summary', 'bulan', 'tahun'));
     }
 
     public function create()

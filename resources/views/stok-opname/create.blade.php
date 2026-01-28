@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('page-title', 'Stock Opname Baru')
-@section('page-subtitle', 'Input hasil hitung fisik stok gudang')
+@section('page-subtitle', 'Input hasil hitung fisik stok besar')
 
 @section('content')
 <div class="max-w-4xl" x-data="opnameForm()">

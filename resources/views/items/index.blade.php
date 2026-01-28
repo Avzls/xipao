@@ -24,7 +24,7 @@
                     <th class="w-28 text-center">Kategori</th>
                     <th class="w-32 text-right">Harga Modal</th>
                     <th class="w-32 text-right">Harga Jual</th>
-                    <th class="w-32 text-right">Stok Gudang</th>
+                    <th class="w-32 text-right">Stok Besar</th>
                     <th class="w-24 text-center">Status</th>
                     <th class="w-24 text-center">Aksi</th>
                 </tr>

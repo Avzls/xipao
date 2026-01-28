@@ -24,6 +24,11 @@ class Item extends Model
         return $this->hasOne(StokGudang::class);
     }
 
+    public function latestOpname(): HasOne
+    {
+        return $this->hasOne(StokOpname::class)->latestOfMany('tanggal_opname');
+    }
+
     // Accessors
     public function getStokAttribute()
     {

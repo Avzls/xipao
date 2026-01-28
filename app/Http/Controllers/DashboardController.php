@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Warung;
-use App\Models\Item;
 use App\Models\StokGudang;
 use App\Models\TransaksiHarian;
-use App\Models\DistribusiStok;
+use App\Models\PengeluaranOperasional;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -14,41 +13,40 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Get all active warungs with today's omset
+        // Get all active warungs
         $warungs = Warung::aktif()->get();
         
-        // Today's summary
+        // Today's summary - Transaksi
         $hariIni = TransaksiHarian::hariIni()->get();
         $totalOmsetHariIni = $hariIni->sum('omset');
         $totalDimsumHariIni = $hariIni->sum('dimsum_terjual');
+        
+        // Today's summary - Operasional
+        $operasionalHariIni = PengeluaranOperasional::whereDate('tanggal', Carbon::today())->sum('nominal');
         
         // This month summary
         $bulanIni = TransaksiHarian::bulanIni()->get();
         $totalOmsetBulanIni = $bulanIni->sum('omset');
         
-        // Low stock alert
-        $stokMenipis = StokGudang::with('item')
-            ->whereColumn('qty', '<', 'min_stock')
-            ->get();
+        // This month - Operasional
+        $operasionalBulanIni = PengeluaranOperasional::whereMonth('tanggal', Carbon::now()->month)
+            ->whereYear('tanggal', Carbon::now()->year)
+            ->sum('nominal');
         
-        // Last 7 days chart data
+        // Last 7 days chart data - Improved accuracy
         $last7Days = collect();
         for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
-            $dayData = [
+            $date = Carbon::now()->subDays($i)->startOfDay();
+            
+            $totalOmset = TransaksiHarian::whereDate('tanggal', $date)->sum('omset');
+            $totalOperasional = PengeluaranOperasional::whereDate('tanggal', $date)->sum('nominal');
+            
+            $last7Days->push([
                 'tanggal' => $date->format('d M'),
-                'total' => 0,
-            ];
-            
-            foreach ($warungs as $warung) {
-                $omset = TransaksiHarian::where('warung_id', $warung->id)
-                    ->whereDate('tanggal', $date)
-                    ->sum('omset');
-                $dayData[$warung->nama_warung] = $omset;
-                $dayData['total'] += $omset;
-            }
-            
-            $last7Days->push($dayData);
+                'omset' => (float) $totalOmset,
+                'operasional' => (float) $totalOperasional,
+                'net' => (float) ($totalOmset - $totalOperasional),
+            ]);
         }
         
         // This month ranking
@@ -69,8 +67,9 @@ class DashboardController extends Controller
             'hariIni',
             'totalOmsetHariIni',
             'totalDimsumHariIni',
+            'operasionalHariIni',
             'totalOmsetBulanIni',
-            'stokMenipis',
+            'operasionalBulanIni',
             'last7Days',
             'ranking',
             'totalOmsetRanking'

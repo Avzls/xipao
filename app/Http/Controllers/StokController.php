@@ -11,7 +11,7 @@ class StokController extends Controller
 {
     public function index()
     {
-        $items = Item::with('stokGudang')->orderBy('nama_item')->get();
+        $items = Item::with(['stokGudang', 'latestOpname'])->orderBy('nama_item')->get();
         
         return view('stok.index', compact('items'));
     }

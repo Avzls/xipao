@@ -25,22 +25,32 @@
             <thead>
                 <tr>
                     <th>Nama Barang</th>
-                    <th class="text-center">Satuan</th>
-                    <th class="text-right">Harga</th>
-                    <th class="text-right">Stok</th>
-                    <th class="text-center w-24">Aksi</th>
+                    <th>Satuan</th>
+                    <th>Harga</th>
+                    <th>Stok</th>
+                    <th>Last Opname</th>
+                    <th class="w-24">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($items as $item)
                     <tr>
                         <td class="font-medium">{{ $item->nama_item }}</td>
-                        <td class="text-center">{{ $item->satuan }}</td>
-                        <td class="text-right text-emerald-600 font-semibold">Rp {{ number_format($item->harga, 0, ',', '.') }}</td>
-                        <td class="text-right font-bold {{ ($item->stokGudang->qty ?? 0) < 10 ? 'text-red-600' : 'text-text-primary' }}">
+                        <td>{{ $item->satuan }}</td>
+                        <td class="text-emerald-600 font-semibold">Rp {{ number_format($item->harga, 0, ',', '.') }}</td>
+                        <td class="font-bold {{ ($item->stokGudang->qty ?? 0) < 10 ? 'text-red-600' : 'text-text-primary' }}">
                             {{ number_format($item->stokGudang->qty ?? 0, 0, ',', '.') }}
                         </td>
-                        <td class="text-center">
+                        <td>
+                            @if($item->latestOpname)
+                                <span class="badge {{ $item->latestOpname->status_badge }}">
+                                    {{ $item->latestOpname->tanggal_opname->translatedFormat('d M Y') }}
+                                </span>
+                            @else
+                                <span class="text-text-secondary text-sm">Belum pernah</span>
+                            @endif
+                        </td>
+                        <td>
                             <div class="flex items-center justify-center gap-2">
                                 <a href="{{ route('stok.edit', $item) }}" class="text-blue-600 hover:text-blue-800">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,7 +71,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="text-center py-8 text-text-secondary">
+                        <td colspan="6" class="text-center py-8 text-text-secondary">
                             Belum ada data barang. <a href="{{ route('stok.create') }}" class="text-primary-600 hover:underline">Tambah sekarang</a>
                         </td>
                     </tr>

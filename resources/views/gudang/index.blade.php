@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('page-title', 'Stok Gudang Pusat')
-@section('page-subtitle', 'Monitoring stok gudang')
+@section('page-title', 'Stok Besar')
+@section('page-subtitle', 'Monitoring stok besar')
 
 @section('header-actions')
     <a href="{{ route('gudang.restok') }}" class="btn btn-primary">

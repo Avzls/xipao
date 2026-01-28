@@ -4,9 +4,9 @@
 @section('page-subtitle', 'Riwayat distribusi stok ke warung')
 
 @section('header-actions')
-    <a href="{{ route('distribusi.create') }}" class="btn btn-primary">
+    {{-- <a href="{{ route('distribusi.create') }}" class="btn btn-primary">
         + Distribusi Baru
-    </a>
+    </a> --}}
 @endsection
 
 @section('content')
