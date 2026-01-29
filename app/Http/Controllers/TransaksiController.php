@@ -197,7 +197,7 @@ class TransaksiController extends Controller
             'modal' => $transaksis->sum('modal'),
         ];
         
-        $bulanNama = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
+        $bulanNama = \Carbon\Carbon::create()->month((int)$bulan)->translatedFormat('F');
         $periodeLabel = "$bulanNama $tahun";
         
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('transaksi.pdf', compact('transaksis', 'totals', 'periodeLabel', 'bulan', 'tahun'));
