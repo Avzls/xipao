@@ -59,7 +59,7 @@
                             <td class="px-4 py-3 text-center font-medium">{{ $libur->warung->nama_warung }}</td>
                             <td class="px-4 py-3 text-center text-text-secondary">{{ $libur->alasan ?? '-' }}</td>
                             <td class="px-4 py-3 text-center">
-                                <form action="{{ route('warung.libur.destroy', $libur) }}" method="POST" class="inline" onsubmit="return confirm('Hapus jadwal libur ini?')">
+                                <form action="{{ route('warung.libur.destroy', $libur) }}" method="POST" class="inline" onsubmit="event.preventDefault(); handleDelete(this, 'jadwal libur ini')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-500 hover:text-red-700">

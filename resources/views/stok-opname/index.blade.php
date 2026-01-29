@@ -70,7 +70,7 @@
                             <td class="text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     @if(!$opname->is_adjusted && $opname->selisih != 0)
-                                        <form action="{{ route('stok-opname.adjust', $opname) }}" method="POST" class="inline" onsubmit="return confirm('Sesuaikan stok besar dengan hasil opname?')">
+                                        <form action="{{ route('stok-opname.adjust', $opname) }}" method="POST" class="inline" onsubmit="event.preventDefault(); showConfirm({type:'warning', title:'Sesuaikan Stok?', message:'Stok besar akan disesuaikan dengan hasil opname.', confirmText:'Ya, Sesuaikan'}).then(ok => ok && this.submit())">
                                             @csrf
                                             <button type="submit" class="text-emerald-600 hover:text-emerald-800" title="Sesuaikan Stok">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +81,7 @@
                                     @elseif($opname->is_adjusted)
                                         <span class="text-xs text-text-secondary">Disesuaikan</span>
                                     @endif
-                                    <form action="{{ route('stok-opname.destroy', $opname) }}" method="POST" class="inline" onsubmit="return confirm('Hapus data opname ini?')">
+                                    <form action="{{ route('stok-opname.destroy', $opname) }}" method="POST" class="inline" onsubmit="event.preventDefault(); handleDelete(this, 'data opname ini')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-800">

@@ -178,18 +178,12 @@ class StokController extends Controller
             'tanggal_masuk' => 'required|date',
         ]);
 
-        // Create restok record
+        // Create restok record - stock akan otomatis bertambah via boot() di RestokGudang model
         \App\Models\RestokGudang::create([
             'item_id' => $stok->id,
             'qty_masuk' => $validated['qty_masuk'],
             'tanggal_masuk' => $validated['tanggal_masuk'],
         ]);
-
-        // Update stock
-        $stok->stokGudang()->updateOrCreate(
-            ['item_id' => $stok->id],
-            ['qty' => ($stok->stokGudang->qty ?? 0) + $validated['qty_masuk']]
-        );
 
         return redirect()->route('stok.index')
             ->with('success', 'Stock berhasil ditambahkan: +' . $validated['qty_masuk'] . ' ' . $stok->nama_item);
