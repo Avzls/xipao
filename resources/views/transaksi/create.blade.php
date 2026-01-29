@@ -57,6 +57,9 @@
                     <div>
                         <label for="modal" class="form-label">Modal (Rp) <span class="text-red-500">*</span></label>
                         <input type="number" name="modal" id="modal" class="form-input" x-model.number="modal" min="0" required>
+                        <p class="text-xs text-text-secondary mt-1">
+                            Klik untuk isi: <span class="text-blue-600 font-medium cursor-pointer hover:underline" @click="modal = dimsum * harga" x-text="formatRupiah(dimsum * harga)"></span>
+                        </p>
                     </div>
                     <div>
                         <label for="cash" class="form-label">Cash Masuk (Rp) <span class="text-red-500">*</span></label>
@@ -102,6 +105,17 @@ function transaksiForm() {
         dimsum: {{ old('dimsum_terjual', 0) }},
         modal: {{ old('modal', 0) }},
         cash: {{ old('cash', 0) }},
+        
+        init() {
+            this.$watch('dimsum', (value) => {
+                this.modal = value * this.harga;
+                this.cash = value * this.harga;
+            });
+        },
+        
+        get penjualan() {
+            return this.dimsum * this.harga;
+        },
         
         get omset() {
             return this.cash - this.modal;
