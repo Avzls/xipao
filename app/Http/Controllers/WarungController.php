@@ -123,4 +123,36 @@ class WarungController extends Controller
 
         return view('warung.laporan-libur', compact('warungs', 'liburs', 'summary'));
     }
+
+    public function exportLaporanLiburPdf(Request $request)
+    {
+        $query = WarungLibur::with('warung');
+
+        if ($request->filled('warung_id')) {
+            $query->where('warung_id', $request->warung_id);
+        }
+        
+        $from = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+        $to = $request->input('to', now()->format('Y-m-d'));
+        
+        $query->whereDate('tanggal', '>=', $from);
+        $query->whereDate('tanggal', '<=', $to);
+
+        $liburs = $query->orderBy('tanggal', 'desc')->get();
+
+        // Summary per warung
+        $summary = WarungLibur::selectRaw('warung_id, COUNT(*) as total_libur')
+            ->whereDate('tanggal', '>=', $from)
+            ->whereDate('tanggal', '<=', $to)
+            ->when($request->filled('warung_id'), fn($q) => $q->where('warung_id', $request->warung_id))
+            ->groupBy('warung_id')
+            ->with('warung')
+            ->get();
+
+        $periodeLabel = \Carbon\Carbon::parse($from)->translatedFormat('d M Y') . ' - ' . \Carbon\Carbon::parse($to)->translatedFormat('d M Y');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('warung.laporan-libur-pdf', compact('liburs', 'summary', 'periodeLabel'));
+
+        return $pdf->download('laporan-libur-' . $from . '-' . $to . '.pdf');
+    }
 }

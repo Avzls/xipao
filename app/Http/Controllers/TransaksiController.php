@@ -36,6 +36,7 @@ class TransaksiController extends Controller
                 'tanggal' => $tx->tanggal->format('Y-m-d'),
                 'tanggal_formatted' => $tx->tanggal->translatedFormat('d M Y'),
                 'warung' => $tx->warung->nama_warung,
+                'status' => $tx->status ?? 'buka',
                 'dimsum' => $tx->dimsum_terjual,
                 'cash' => $tx->cash,
                 'modal' => $tx->modal,
@@ -49,7 +50,11 @@ class TransaksiController extends Controller
             'total_dimsum' => TransaksiHarian::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->sum('dimsum_terjual'),
         ];
         
-        return view('transaksi.index', compact('warungs', 'transaksis', 'transaksiJson', 'summary', 'bulan', 'tahun'));
+        // Get dimsum price for modal form
+        $dimsum = Item::where('nama_item', 'like', '%dimsum%')->first();
+        $hargaDimsum = $dimsum?->harga ?? 0;
+        
+        return view('transaksi.index', compact('warungs', 'transaksis', 'transaksiJson', 'summary', 'bulan', 'tahun', 'hargaDimsum'));
     }
 
     public function create()
@@ -68,6 +73,7 @@ class TransaksiController extends Controller
         $validated = $request->validate([
             'warung_id' => 'required|exists:warungs,id',
             'tanggal' => 'required|date',
+            'status' => 'required|in:buka,tutup',
             'dimsum_terjual' => 'required|integer|min:0',
             'cash' => 'required|numeric|min:0',
             'modal' => 'required|numeric|min:0',
@@ -88,6 +94,7 @@ class TransaksiController extends Controller
         $transaksi = TransaksiHarian::create([
             'warung_id' => $validated['warung_id'],
             'tanggal' => $validated['tanggal'],
+            'status' => $validated['status'],
             'dimsum_terjual' => $validated['dimsum_terjual'],
             'cash' => $validated['cash'],
             'modal' => $validated['modal'],
@@ -164,5 +171,37 @@ class TransaksiController extends Controller
 
         return redirect()->route('transaksi.index')
             ->with('success', 'Transaksi berhasil dihapus! Stok dikembalikan.');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
+        
+        $query = TransaksiHarian::with('warung')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->orderBy('tanggal', 'asc')
+            ->orderBy('warung_id', 'asc');
+        
+        if ($request->filled('warung_id')) {
+            $query->where('warung_id', $request->warung_id);
+        }
+        
+        $transaksis = $query->get();
+        
+        // Calculate totals
+        $totals = [
+            'dimsum' => $transaksis->where('status', 'buka')->sum('dimsum_terjual'),
+            'omset' => $transaksis->sum('omset'),
+            'modal' => $transaksis->sum('modal'),
+        ];
+        
+        $bulanNama = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
+        $periodeLabel = "$bulanNama $tahun";
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('transaksi.pdf', compact('transaksis', 'totals', 'periodeLabel', 'bulan', 'tahun'));
+        
+        return $pdf->download("transaksi_detail_{$bulan}_{$tahun}.pdf");
     }
 }

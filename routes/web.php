@@ -24,11 +24,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/warung/libur', [WarungController::class, 'storeLibur'])->name('warung.libur.store');
     Route::delete('/warung/libur/{libur}', [WarungController::class, 'destroyLibur'])->name('warung.libur.destroy');
     Route::get('/warung/laporan-libur', [WarungController::class, 'laporanLibur'])->name('warung.laporan-libur');
+    Route::get('/warung/laporan-libur/pdf', [WarungController::class, 'exportLaporanLiburPdf'])->name('warung.laporan-libur.pdf');
     
     // Warung Resource
     Route::resource('warung', WarungController::class)->except(['show']);
     
     // Transaksi
+    Route::get('/transaksi/export-pdf', [TransaksiController::class, 'exportPdf'])->name('transaksi.export-pdf');
     Route::resource('transaksi', TransaksiController::class);
     
     // Operasional

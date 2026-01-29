@@ -60,18 +60,6 @@
                     </svg>
                     <span x-show="!sidebarMinimized">Daftar Warung</span>
                 </a>
-                <a href="{{ route('warung.libur') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('warung.libur') ? 'true' : 'false' }} }" title="Jadwal Libur">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <span x-show="!sidebarMinimized">Jadwal Libur</span>
-                </a>
-                <a href="{{ route('warung.laporan-libur') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('warung.laporan-libur') ? 'true' : 'false' }} }" title="Laporan Libur">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span x-show="!sidebarMinimized">Laporan Libur</span>
-                </a>
 
                 <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Stok</div>
                 <a href="{{ route('stok.index') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('stok.*') ? 'true' : 'false' }} }" title="Stock Besar">
@@ -81,33 +69,20 @@
                     <span x-show="!sidebarMinimized">Stok Besar</span>
                 </a>
 
-                <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Input</div>
-                <a href="{{ route('transaksi.create') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('transaksi.create') ? 'true' : 'false' }} }" title="Input Transaksi">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    <span x-show="!sidebarMinimized">Transaksi Harian</span>
-                </a>
-                <a href="{{ route('operasional.create') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('operasional.create') ? 'true' : 'false' }} }" title="Input Biaya Operasional">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                    <span x-show="!sidebarMinimized">Biaya Operasional</span>
-                </a>
-
-                <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Mutasi</div>
-                <a href="{{ route('transaksi.index') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('transaksi.index') || request()->routeIs('transaksi.edit') ? 'true' : 'false' }} }" title="Laporan Transaksi">
+                <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Transaksi</div>
+                <a href="{{ route('transaksi.index') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('transaksi.*') ? 'true' : 'false' }} }" title="Transaksi">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                     <span x-show="!sidebarMinimized">Transaksi</span>
                 </a>
-                <a href="{{ route('operasional.index') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('operasional.index') || request()->routeIs('operasional.edit') ? 'true' : 'false' }} }" title="Laporan Operasional">
+                <a href="{{ route('operasional.index') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('operasional.*') ? 'true' : 'false' }} }" title="Operasional">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                     <span x-show="!sidebarMinimized">Operasional</span>
                 </a>
+
                 <a href="{{ route('laporan.konsolidasi') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('laporan.*') ? 'true' : 'false' }} }" title="Konsolidasi">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -179,5 +154,107 @@
             </div>
         </main>
     </div>
+
+    <!-- Custom Confirm Dialog -->
+    <div id="customConfirmDialog" class="fixed inset-0 z-[100] hidden">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" id="confirmOverlay"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div id="confirmBox" class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform scale-95 opacity-0 transition-all duration-200">
+                <!-- Header with Icon -->
+                <div class="p-6 pb-4">
+                    <div id="confirmIconWrapper" class="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                        <!-- Icon will be set by JS -->
+                    </div>
+                    <h3 id="confirmTitle" class="text-xl font-bold text-center text-gray-800"></h3>
+                </div>
+                
+                <!-- Message -->
+                <div class="px-6 pb-6">
+                    <p id="confirmMessage" class="text-center text-gray-600"></p>
+                </div>
+                
+                <!-- Buttons -->
+                <div class="p-4 bg-gray-50 rounded-b-2xl flex gap-3">
+                    <button id="confirmCancel" class="flex-1 px-4 py-3 rounded-xl font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">
+                        Batal
+                    </button>
+                    <button id="confirmOk" class="flex-1 px-4 py-3 rounded-xl font-semibold text-white transition-colors">
+                        Ya, Lanjutkan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Custom Confirm Dialog
+    function showConfirm(options) {
+        return new Promise((resolve) => {
+            const dialog = document.getElementById('customConfirmDialog');
+            const confirmBox = document.getElementById('confirmBox');
+            const iconWrapper = document.getElementById('confirmIconWrapper');
+            const title = document.getElementById('confirmTitle');
+            const message = document.getElementById('confirmMessage');
+            const okBtn = document.getElementById('confirmOk');
+            const cancelBtn = document.getElementById('confirmCancel');
+            
+            // Set type styling
+            const type = options.type || 'warning';
+            const styles = {
+                warning: { bg: 'bg-amber-100', icon: '⚠️', btnBg: 'bg-amber-500 hover:bg-amber-600' },
+                danger: { bg: 'bg-red-100', icon: '🗑️', btnBg: 'bg-red-500 hover:bg-red-600' },
+                info: { bg: 'bg-blue-100', icon: '❓', btnBg: 'bg-blue-500 hover:bg-blue-600' },
+                success: { bg: 'bg-emerald-100', icon: '✅', btnBg: 'bg-emerald-500 hover:bg-emerald-600' }
+            };
+            
+            const style = styles[type] || styles.warning;
+            iconWrapper.className = `w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${style.bg}`;
+            iconWrapper.innerHTML = `<span class="text-3xl">${options.icon || style.icon}</span>`;
+            title.textContent = options.title || 'Konfirmasi';
+            message.textContent = options.message || 'Apakah Anda yakin?';
+            okBtn.className = `flex-1 px-4 py-3 rounded-xl font-semibold text-white transition-colors ${style.btnBg}`;
+            okBtn.textContent = options.confirmText || 'Ya, Lanjutkan';
+            cancelBtn.textContent = options.cancelText || 'Batal';
+            
+            // Show dialog with animation
+            dialog.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                confirmBox.classList.remove('scale-95', 'opacity-0');
+                confirmBox.classList.add('scale-100', 'opacity-100');
+            });
+            
+            // Handle buttons
+            const cleanup = () => {
+                confirmBox.classList.remove('scale-100', 'opacity-100');
+                confirmBox.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => dialog.classList.add('hidden'), 200);
+            };
+            
+            okBtn.onclick = () => { cleanup(); resolve(true); };
+            cancelBtn.onclick = () => { cleanup(); resolve(false); };
+            document.getElementById('confirmOverlay').onclick = () => { cleanup(); resolve(false); };
+        });
+    }
+    
+    // Alias for delete confirmation
+    function confirmDelete(itemName) {
+        return showConfirm({
+            type: 'danger',
+            icon: '🗑️',
+            title: 'Hapus Data?',
+            message: `Yakin hapus ${itemName || 'data ini'}? Tindakan ini tidak dapat dibatalkan.`,
+            confirmText: 'Ya, Hapus',
+            cancelText: 'Batal'
+        });
+    }
+    
+    // Handle delete with form
+    async function handleDelete(form, itemName) {
+        const confirmed = await confirmDelete(itemName);
+        if (confirmed) {
+            form.submit();
+        }
+    }
+    </script>
 </body>
 </html>

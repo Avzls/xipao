@@ -11,6 +11,7 @@ class TransaksiHarian extends Model
     protected $fillable = [
         'warung_id',
         'tanggal',
+        'status',
         'dimsum_terjual',
         'cash',
         'modal',

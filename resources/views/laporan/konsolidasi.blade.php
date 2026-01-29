@@ -90,25 +90,27 @@
                 </thead>
                 <tbody>
                     @foreach($data as $row)
-                        <tr class="{{ $row['is_libur'] ? 'bg-yellow-50' : '' }}">
+                        <tr class="{{ $row['is_tutup'] ? 'bg-red-50' : '' }}">
                             <td class="font-medium">{{ $row['warung']->nama_warung }}</td>
                             <td>
-                                @if($row['is_libur'])
-                                    <span class="badge bg-yellow-100 text-yellow-800">LIBUR ({{ $row['hari_libur'] }} hari)</span>
+                                @if($row['is_tutup'])
+                                    <span class="badge bg-red-100 text-red-800">TUTUP ({{ $row['hari_tutup'] }} hari)</span>
+                                @elseif($row['hari_tutup'] > 0)
+                                    {{ $row['hari_kerja'] }} <span class="text-red-500 text-sm">(+{{ $row['hari_tutup'] }} tutup)</span>
                                 @else
                                     {{ $row['hari_kerja'] }}
                                 @endif
                             </td>
                             <td>
-                                @if($row['is_libur'])
-                                    <span class="text-yellow-600">-</span>
+                                @if($row['is_tutup'])
+                                    <span class="text-red-500">-</span>
                                 @else
                                     {{ number_format($row['dimsum'], 0, ',', '.') }}
                                 @endif
                             </td>
                             <td>
-                                @if($row['is_libur'])
-                                    <span class="text-yellow-600">Rp 0</span>
+                                @if($row['is_tutup'])
+                                    <span class="text-red-500">Rp 0</span>
                                 @else
                                     Rp {{ number_format($row['omset'], 0, ',', '.') }}
                                 @endif

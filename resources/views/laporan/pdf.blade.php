@@ -79,6 +79,7 @@
             <tr>
                 <th>No</th>
                 <th>Warung</th>
+                <th class="text-center">Hari</th>
                 <th class="text-center">Dimsum</th>
                 <th class="text-right">Omset</th>
                 <th class="text-right">Operasional</th>
@@ -87,19 +88,28 @@
         </thead>
         <tbody>
             @foreach($data as $index => $row)
-                <tr style="{{ ($row['is_libur'] ?? false) ? 'background-color: #fef9c3;' : '' }}">
+                <tr style="{{ ($row['is_tutup'] ?? false) ? 'background-color: #fee2e2;' : '' }}">
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $row['warung'] }}</td>
                     <td class="text-center">
-                        @if($row['is_libur'] ?? false)
-                            <span style="color: #ca8a04;">LIBUR</span>
+                        @if($row['is_tutup'] ?? false)
+                            <span style="color: #dc2626;">TUTUP ({{ $row['hari_tutup'] ?? 0 }} hari)</span>
+                        @elseif(($row['hari_kerja'] ?? 0) > 0)
+                            {{ $row['hari_kerja'] }}
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @if($row['is_tutup'] ?? false)
+                            <span style="color: #dc2626;">-</span>
                         @else
                             {{ number_format($row['dimsum'], 0, ',', '.') }}
                         @endif
                     </td>
                     <td class="text-right">
-                        @if($row['is_libur'] ?? false)
-                            <span style="color: #ca8a04;">Rp 0</span>
+                        @if($row['is_tutup'] ?? false)
+                            <span style="color: #dc2626;">Rp 0</span>
                         @else
                             Rp {{ number_format($row['omset'], 0, ',', '.') }}
                         @endif
@@ -109,7 +119,7 @@
                 </tr>
             @endforeach
             <tr class="total-row">
-                <td colspan="2">TOTAL</td>
+                <td colspan="3">TOTAL</td>
                 <td class="text-center">{{ number_format($totals['dimsum'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($totals['omset'], 0, ',', '.') }}</td>
                 <td class="text-right negative">Rp {{ number_format($totals['operasional'], 0, ',', '.') }}</td>

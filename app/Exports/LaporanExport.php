@@ -49,25 +49,25 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
                 ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
                 ->sum('nominal');
             
+            // Hitung transaksi buka dan tutup
+            $hariBuka = (clone $transaksi)->where('status', 'buka')->count();
+            $hariTutup = (clone $transaksi)->where('status', 'tutup')->count();
+            $hariKerja = $hariBuka;
+            
             $omset = $transaksi->sum('omset');
             $profit = $omset - $operasional;
-            $hariKerja = $transaksi->count();
             $dimsum = $transaksi->sum('dimsum_terjual');
             
-            // Cek jumlah hari libur dalam periode
-            $hariLibur = \App\Models\WarungLibur::where('warung_id', $warung->id)
-                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
-                ->count();
-            
-            $isLibur = ($hariKerja == 0 && $hariLibur > 0);
+            $totalTransaksi = $hariBuka + $hariTutup;
+            $isTutup = ($totalTransaksi > 0 && $hariBuka == 0);
             
             return [
                 'warung' => $warung->nama_warung,
-                'dimsum' => $isLibur ? 'LIBUR' : $dimsum,
-                'omset' => $isLibur ? 0 : $omset,
+                'dimsum' => $isTutup ? 'TUTUP' : $dimsum,
+                'omset' => $isTutup ? 0 : $omset,
                 'operasional' => $operasional,
                 'profit' => $profit,
-                'hari_kerja' => $isLibur ? 'LIBUR (' . $hariLibur . ' hari)' : $hariKerja,
+                'hari_kerja' => $isTutup ? 'TUTUP (' . $hariTutup . ' hari)' : ($hariTutup > 0 ? $hariKerja . ' (+' . $hariTutup . ' tutup)' : $hariKerja),
             ];
         });
 

@@ -35,36 +35,52 @@
                     </div>
                 </div>
 
+                <!-- Toggle Status Buka/Tutup -->
+                <div class="flex items-center gap-4 p-4 rounded-lg" :class="isTutup ? 'bg-red-50 border border-red-200' : 'bg-emerald-50 border border-emerald-200'">
+                    <input type="hidden" name="status" :value="isTutup ? 'tutup' : 'buka'">
+                    <div class="flex items-center gap-3">
+                        <span class="font-medium" :class="isTutup ? 'text-red-700' : 'text-emerald-700'" x-text="isTutup ? '🔴 Warung TUTUP' : '🟢 Warung BUKA'"></span>
+                        <button type="button" 
+                            @click="toggleStatus()"
+                            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                            :class="isTutup ? 'bg-red-500' : 'bg-emerald-500'">
+                            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" 
+                                :class="isTutup ? 'translate-x-6' : 'translate-x-1'"></span>
+                        </button>
+                    </div>
+                    <span class="text-sm" :class="isTutup ? 'text-red-600' : 'text-emerald-600'" x-show="isTutup">Semua nilai akan di-set ke 0</span>
+                </div>
+
                 <!-- Penjualan Dimsum -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 class="font-semibold text-blue-800 mb-3">🥟 Penjualan Dimsum</h3>
+                <div class="rounded-lg p-4 transition-opacity" :class="isTutup ? 'bg-gray-100 border border-gray-200 opacity-50' : 'bg-blue-50 border border-blue-200'">
+                    <h3 class="font-semibold mb-3" :class="isTutup ? 'text-gray-500' : 'text-blue-800'">🥟 Penjualan Dimsum</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="dimsum_terjual" class="form-label">Dimsum Terjual (pcs) <span class="text-red-500">*</span></label>
-                            <input type="number" name="dimsum_terjual" id="dimsum_terjual" class="form-input" x-model.number="dimsum" min="0" required>
-                            <p class="text-xs text-blue-600 mt-1">Stok akan otomatis berkurang</p>
+                            <input type="number" name="dimsum_terjual" id="dimsum_terjual" class="form-input" x-model.number="dimsum" min="0" required :disabled="isTutup" :class="isTutup ? 'bg-gray-100 cursor-not-allowed' : ''">
+                            <p class="text-xs mt-1" :class="isTutup ? 'text-gray-400' : 'text-blue-600'">Stok akan otomatis berkurang</p>
                         </div>
                         <div>
                             <label class="form-label">Penjualan</label>
-                            <div class="bg-white text-blue-700 font-bold px-4 py-2.5 rounded-lg border border-blue-200" x-text="formatRupiah(dimsum * harga)"></div>
-                            <p class="text-xs text-blue-600 mt-1">Harga: <span x-text="formatRupiah(harga)"></span>/pcs</p>
+                            <div class="font-bold px-4 py-2.5 rounded-lg border" :class="isTutup ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white text-blue-700 border-blue-200'" x-text="formatRupiah(dimsum * harga)"></div>
+                            <p class="text-xs mt-1" :class="isTutup ? 'text-gray-400' : 'text-blue-600'">Harga: <span x-text="formatRupiah(harga)"></span>/pcs</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Modal & Cash -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" :class="isTutup ? 'opacity-50' : ''">
                     <div>
                         <label for="modal" class="form-label">Modal (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" name="modal" id="modal" class="form-input" x-model.number="modal" min="0" required>
-                        <p class="text-xs text-text-secondary mt-1">
+                        <input type="number" name="modal" id="modal" class="form-input" x-model.number="modal" min="0" required :disabled="isTutup" :class="isTutup ? 'bg-gray-100 cursor-not-allowed' : ''">
+                        <p class="text-xs text-text-secondary mt-1" x-show="!isTutup">
                             Klik untuk isi: <span class="text-blue-600 font-medium cursor-pointer hover:underline" @click="modal = dimsum * harga" x-text="formatRupiah(dimsum * harga)"></span>
                         </p>
                     </div>
                     <div>
                         <label for="cash" class="form-label">Cash Masuk (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" name="cash" id="cash" class="form-input" x-model.number="cash" min="0" required>
-                        <p class="text-xs text-text-secondary mt-1">
+                        <input type="number" name="cash" id="cash" class="form-input" x-model.number="cash" min="0" required :disabled="isTutup" :class="isTutup ? 'bg-gray-100 cursor-not-allowed' : ''">
+                        <p class="text-xs text-text-secondary mt-1" x-show="!isTutup">
                             Klik untuk isi: <span class="text-emerald-600 font-medium cursor-pointer hover:underline" @click="cash = dimsum * harga" x-text="formatRupiah(dimsum * harga)"></span>
                         </p>
                     </div>
@@ -105,11 +121,23 @@ function transaksiForm() {
         dimsum: {{ old('dimsum_terjual', 0) }},
         modal: {{ old('modal', 0) }},
         cash: {{ old('cash', 0) }},
+        isTutup: {{ old('status') == 'tutup' ? 'true' : 'false' }},
         
         init() {
             this.$watch('dimsum', (value) => {
-                this.modal = value * this.harga;
+                if (!this.isTutup) {
+                    this.modal = value * this.harga;
+                }
             });
+        },
+        
+        toggleStatus() {
+            this.isTutup = !this.isTutup;
+            if (this.isTutup) {
+                this.dimsum = 0;
+                this.modal = 0;
+                this.cash = 0;
+            }
         },
         
         get penjualan() {

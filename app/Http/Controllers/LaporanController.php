@@ -23,43 +23,46 @@ class LaporanController extends Controller
         
         // Warung filter
         $warungId = $request->input('warung_id');
+        
+        // Build query - ambil langsung dari database transaksi
+        $query = TransaksiHarian::with('warung')
+            ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
+        
         if ($warungId) {
-            $warungs = $allWarungs->where('id', $warungId);
-        } else {
-            $warungs = $allWarungs;
+            $query->where('warung_id', $warungId);
         }
         
-        $data = $warungs->map(function ($warung) use ($tanggalAwal, $tanggalAkhir) {
-            $transaksi = TransaksiHarian::where('warung_id', $warung->id)
-                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
+        // Get all transactions and group by warung
+        $transaksis = $query->get()->groupBy('warung_id');
+        
+        $data = $transaksis->map(function ($transactions, $warungId) use ($tanggalAwal, $tanggalAkhir) {
+            $warung = $transactions->first()->warung;
             
-            $operasional = PengeluaranOperasional::where('warung_id', $warung->id)
+            $operasional = PengeluaranOperasional::where('warung_id', $warungId)
                 ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
                 ->sum('nominal');
             
-            $omset = $transaksi->sum('omset');
+            // Hitung transaksi buka dan tutup
+            $hariBuka = $transactions->where('status', 'buka')->count();
+            $hariTutup = $transactions->where('status', 'tutup')->count();
+            
+            $omset = $transactions->sum('omset');
             $profit = $omset - $operasional;
-            $hariKerja = $transaksi->count();
             
-            // Cek jumlah hari libur dalam periode
-            $hariLibur = \App\Models\WarungLibur::where('warung_id', $warung->id)
-                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
-                ->count();
-            
-            // Flag libur: tidak ada transaksi tapi ada jadwal libur
-            $isLibur = ($hariKerja == 0 && $hariLibur > 0);
+            // Flag tutup: semua transaksi dalam periode adalah tutup
+            $isTutup = ($hariBuka == 0 && $hariTutup > 0);
             
             return [
                 'warung' => $warung,
                 'omset' => $omset,
                 'operasional' => $operasional,
                 'net_profit' => $profit,
-                'dimsum' => $transaksi->sum('dimsum_terjual'),
-                'hari_kerja' => $hariKerja,
-                'hari_libur' => $hariLibur,
-                'is_libur' => $isLibur,
+                'dimsum' => $transactions->where('status', 'buka')->sum('dimsum_terjual'),
+                'hari_kerja' => $hariBuka,
+                'hari_tutup' => $hariTutup,
+                'is_tutup' => $isTutup,
             ];
-        });
+        })->sortBy(fn($item) => $item['warung']->nama_warung)->values();
         
         $totals = [
             'omset' => $data->sum('omset'),
@@ -84,49 +87,47 @@ class LaporanController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $allWarungs = Warung::aktif()->get();
-        
         $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
         $warungId = $request->input('warung_id');
         
-        // Filter by warung if specified
+        // Build query - ambil langsung dari database transaksi
+        $query = TransaksiHarian::with('warung')
+            ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
+        
         if ($warungId) {
-            $warungs = $allWarungs->where('id', $warungId);
-        } else {
-            $warungs = $allWarungs;
+            $query->where('warung_id', $warungId);
         }
         
-        $data = $warungs->map(function ($warung) use ($tanggalAwal, $tanggalAkhir) {
-            $transaksi = TransaksiHarian::where('warung_id', $warung->id)
-                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
+        // Get all transactions and group by warung
+        $transaksis = $query->get()->groupBy('warung_id');
+        
+        $data = $transaksis->map(function ($transactions, $warungId) use ($tanggalAwal, $tanggalAkhir) {
+            $warung = $transactions->first()->warung;
             
-            $operasional = PengeluaranOperasional::where('warung_id', $warung->id)
+            $operasional = PengeluaranOperasional::where('warung_id', $warungId)
                 ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
                 ->sum('nominal');
             
-            $omset = $transaksi->sum('omset');
+            $hariBuka = $transactions->where('status', 'buka')->count();
+            $hariTutup = $transactions->where('status', 'tutup')->count();
+            
+            $omset = $transactions->sum('omset');
             $profit = $omset - $operasional;
-            $hariKerja = $transaksi->count();
             
-            // Cek jumlah hari libur dalam periode
-            $hariLibur = \App\Models\WarungLibur::where('warung_id', $warung->id)
-                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
-                ->count();
-            
-            $isLibur = ($hariKerja == 0 && $hariLibur > 0);
+            $isTutup = ($hariBuka == 0 && $hariTutup > 0);
             
             return [
                 'warung' => $warung->nama_warung,
                 'omset' => $omset,
                 'operasional' => $operasional,
                 'net_profit' => $profit,
-                'dimsum' => $transaksi->sum('dimsum_terjual'),
-                'hari_kerja' => $hariKerja,
-                'hari_libur' => $hariLibur,
-                'is_libur' => $isLibur,
+                'dimsum' => $transactions->where('status', 'buka')->sum('dimsum_terjual'),
+                'hari_kerja' => $hariBuka,
+                'hari_tutup' => $hariTutup,
+                'is_tutup' => $isTutup,
             ];
-        });
+        })->sortBy('warung')->values();
         
         $totals = [
             'omset' => $data->sum('omset'),

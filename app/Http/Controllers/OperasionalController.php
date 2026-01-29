@@ -29,12 +29,13 @@ class OperasionalController extends Controller
 
         $operasionals = $query->paginate(20);
         $warungs = Warung::orderBy('nama_warung')->get();
+        $jenisOptions = PengeluaranOperasional::JENIS;
         
         $totalBulanIni = PengeluaranOperasional::whereMonth('tanggal', now()->month)
             ->whereYear('tanggal', now()->year)
             ->sum('nominal');
 
-        return view('operasional.index', compact('operasionals', 'warungs', 'totalBulanIni'));
+        return view('operasional.index', compact('operasionals', 'warungs', 'jenisOptions', 'totalBulanIni'));
     }
 
     public function create()
