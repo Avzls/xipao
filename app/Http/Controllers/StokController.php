@@ -23,9 +23,14 @@ class StokController extends Controller
             $query->whereDate('tanggal_masuk', '<=', $request->to);
         }
         
-        $histories = $query->take(50)->get();
+        $histories = $query->paginate(5, ['*'], 'history_page');
         
-        return view('stok.index', compact('items', 'histories'));
+        // History Opname dengan cash reconciliation
+        $opnames = StokOpname::with('item')
+            ->orderBy('tanggal_opname', 'desc')
+            ->paginate(5, ['*'], 'opname_page');
+        
+        return view('stok.index', compact('items', 'histories', 'opnames'));
     }
 
     public function create()
@@ -112,17 +117,27 @@ class StokController extends Controller
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:items,id',
             'items.*.qty_fisik' => 'required|integer|min:0',
+            'items.*.harga' => 'required|numeric|min:0',
+            'expected_cash' => 'required|numeric|min:0',
+            'actual_cash' => 'required|numeric|min:0',
         ]);
+
+        $totalExpected = 0;
 
         foreach ($validated['items'] as $data) {
             $item = Item::with('stokGudang')->find($data['item_id']);
             $qtySistem = $item->stokGudang?->qty ?? 0;
+            $terjual = max(0, $qtySistem - $data['qty_fisik']);
+            $expectedCash = $terjual * $data['harga'];
+            $totalExpected += $expectedCash;
             
             $opname = StokOpname::create([
                 'item_id' => $data['item_id'],
                 'tanggal_opname' => $validated['tanggal_opname'],
                 'qty_sistem' => $qtySistem,
                 'qty_fisik' => $data['qty_fisik'],
+                'expected_cash' => $expectedCash,
+                'actual_cash' => $validated['actual_cash'],
             ]);
 
             // Auto-adjust stock
@@ -135,8 +150,16 @@ class StokController extends Controller
             }
         }
 
+        $cashSelisih = $validated['actual_cash'] - $totalExpected;
+        $message = 'Stock opname berhasil! Stok sudah disesuaikan.';
+        if ($cashSelisih < 0) {
+            $message .= ' ⚠️ Cash kurang Rp ' . number_format(abs($cashSelisih), 0, ',', '.');
+        } elseif ($cashSelisih > 0) {
+            $message .= ' ✅ Cash lebih Rp ' . number_format($cashSelisih, 0, ',', '.');
+        }
+
         return redirect()->route('stok.index')
-            ->with('success', 'Stock opname berhasil! Stok sudah disesuaikan.');
+            ->with('success', $message);
     }
 
     // History Restok

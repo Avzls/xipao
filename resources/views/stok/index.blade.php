@@ -145,8 +145,67 @@
             </tbody>
         </table>
     </div>
+    @if($histories->hasPages())
+    <div class="mt-4">
+        {{ $histories->appends(request()->except('history_page'))->links() }}
+    </div>
+    @endif
 </div>
 
+<!-- History Opname dengan Cash Reconciliation -->
+<div class="card mb-6">
+    <h3 class="font-semibold text-lg mb-4">💰 History Opname & Rekonsiliasi Kas</h3>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="text-center">Tanggal</th>
+                    <th class="text-center">Barang</th>
+                    <th class="text-center">Terjual</th>
+                    <th class="text-center">Expected Cash</th>
+                    <th class="text-center">Actual Cash</th>
+                    <th class="text-center">Selisih</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($opnames as $opname)
+                    @php
+                        $terjual = max(0, $opname->qty_sistem - $opname->qty_fisik);
+                    @endphp
+                    <tr>
+                        <td class="text-center">{{ $opname->tanggal_opname->format('d/m/Y') }}</td>
+                        <td class="text-center font-medium">{{ $opname->item->nama_item ?? '-' }}</td>
+                        <td class="text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium {{ $terjual > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600' }}">
+                                {{ number_format($terjual, 0, ',', '.') }} pcs
+                            </span>
+                        </td>
+                        <td class="text-center font-semibold text-emerald-600">
+                            Rp {{ number_format($opname->expected_cash ?? 0, 0, ',', '.') }}
+                        </td>
+                        <td class="text-center font-semibold">
+                            Rp {{ number_format($opname->actual_cash ?? 0, 0, ',', '.') }}
+                        </td>
+                        <td class="text-center font-bold {{ ($opname->cash_selisih ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">
+                            {{ ($opname->cash_selisih ?? 0) >= 0 ? '+' : '' }}Rp {{ number_format($opname->cash_selisih ?? 0, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-text-secondary">
+                            Belum ada riwayat stock opname
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    @if($opnames->hasPages())
+    <div class="mt-4">
+        {{ $opnames->appends(request()->except('opname_page'))->links() }}
+    </div>
+    @endif
+</div>
 
 <!-- Modal Tambah Stock -->
 <div id="restokModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">

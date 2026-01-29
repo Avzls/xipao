@@ -13,6 +13,9 @@ class StokOpname extends Model
         'qty_sistem',
         'qty_fisik',
         'selisih',
+        'expected_cash',
+        'actual_cash',
+        'cash_selisih',
         'status',
         'keterangan',
         'is_adjusted',
@@ -21,6 +24,9 @@ class StokOpname extends Model
     protected $casts = [
         'tanggal_opname' => 'date',
         'is_adjusted' => 'boolean',
+        'expected_cash' => 'decimal:2',
+        'actual_cash' => 'decimal:2',
+        'cash_selisih' => 'decimal:2',
     ];
 
     // Relationships
@@ -43,6 +49,11 @@ class StokOpname extends Model
                 $model->status = 'kurang';
             } else {
                 $model->status = 'lebih';
+            }
+            
+            // Calculate cash selisih
+            if ($model->actual_cash !== null) {
+                $model->cash_selisih = $model->actual_cash - $model->expected_cash;
             }
         });
     }
