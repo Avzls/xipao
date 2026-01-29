@@ -109,7 +109,6 @@ function transaksiForm() {
         init() {
             this.$watch('dimsum', (value) => {
                 this.modal = value * this.harga;
-                this.cash = value * this.harga;
             });
         },
         
