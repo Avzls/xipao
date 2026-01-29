@@ -19,8 +19,14 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Warung
-    Route::resource('warung', WarungController::class);
+    // Warung Libur (harus sebelum resource route)
+    Route::get('/warung/libur', [WarungController::class, 'libur'])->name('warung.libur');
+    Route::post('/warung/libur', [WarungController::class, 'storeLibur'])->name('warung.libur.store');
+    Route::delete('/warung/libur/{libur}', [WarungController::class, 'destroyLibur'])->name('warung.libur.destroy');
+    Route::get('/warung/laporan-libur', [WarungController::class, 'laporanLibur'])->name('warung.laporan-libur');
+    
+    // Warung Resource
+    Route::resource('warung', WarungController::class)->except(['show']);
     
     // Transaksi
     Route::resource('transaksi', TransaksiController::class);
@@ -28,15 +34,21 @@ Route::middleware('auth')->group(function () {
     // Operasional
     Route::resource('operasional', OperasionalController::class)->except(['show']);
     
+    // Stok History (harus sebelum stok routes dengan parameter)
+    Route::get('/stok/history', [StokController::class, 'history'])->name('stok.history');
+    Route::get('/stok/history/pdf', [StokController::class, 'exportHistoryPdf'])->name('stok.history.pdf');
+    
     // Stock Besar (Items + Stock + Opname)
     Route::get('/stok', [StokController::class, 'index'])->name('stok.index');
     Route::get('/stok/create', [StokController::class, 'create'])->name('stok.create');
     Route::post('/stok', [StokController::class, 'store'])->name('stok.store');
+    Route::get('/stok/opname', [StokController::class, 'opname'])->name('stok.opname');
+    Route::post('/stok/opname', [StokController::class, 'storeOpname'])->name('stok.opname.store');
+    Route::get('/stok/{stok}/restok', [StokController::class, 'restok'])->name('stok.restok');
+    Route::post('/stok/{stok}/restok', [StokController::class, 'storeRestok'])->name('stok.restok.store');
     Route::get('/stok/{stok}/edit', [StokController::class, 'edit'])->name('stok.edit');
     Route::put('/stok/{stok}', [StokController::class, 'update'])->name('stok.update');
     Route::delete('/stok/{stok}', [StokController::class, 'destroy'])->name('stok.destroy');
-    Route::get('/stok/opname', [StokController::class, 'opname'])->name('stok.opname');
-    Route::post('/stok/opname', [StokController::class, 'storeOpname'])->name('stok.opname.store');
     
     // Laporan
     Route::get('/laporan/konsolidasi', [LaporanController::class, 'konsolidasi'])->name('laporan.konsolidasi');

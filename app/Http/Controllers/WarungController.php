@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Warung;
+use App\Models\WarungLibur;
 use Illuminate\Http\Request;
 
 class WarungController extends Controller
@@ -59,5 +60,67 @@ class WarungController extends Controller
 
         return redirect()->route('warung.index')
             ->with('success', 'Warung berhasil dihapus!');
+    }
+
+    // Warung Libur
+    public function libur()
+    {
+        $warungs = Warung::where('status', 'aktif')->orderBy('nama_warung')->get();
+        $liburs = WarungLibur::with('warung')
+            ->orderBy('tanggal', 'desc')
+            ->paginate(15);
+        
+        return view('warung.libur', compact('warungs', 'liburs'));
+    }
+
+    public function storeLibur(Request $request)
+    {
+        $validated = $request->validate([
+            'warung_id' => 'required|exists:warungs,id',
+            'tanggal' => 'required|date',
+            'alasan' => 'nullable|string|max:255',
+        ]);
+
+        WarungLibur::create($validated);
+
+        return redirect()->route('warung.libur')
+            ->with('success', 'Jadwal libur berhasil ditambahkan!');
+    }
+
+    public function destroyLibur(WarungLibur $libur)
+    {
+        $libur->delete();
+
+        return redirect()->route('warung.libur')
+            ->with('success', 'Jadwal libur berhasil dihapus!');
+    }
+
+    public function laporanLibur(Request $request)
+    {
+        $warungs = Warung::where('status', 'aktif')->orderBy('nama_warung')->get();
+        
+        $query = WarungLibur::with('warung');
+
+        if ($request->filled('warung_id')) {
+            $query->where('warung_id', $request->warung_id);
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('tanggal', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('tanggal', '<=', $request->to);
+        }
+
+        $liburs = $query->orderBy('tanggal', 'desc')->paginate(20)->withQueryString();
+
+        // Summary per warung
+        $summary = WarungLibur::selectRaw('warung_id, COUNT(*) as total_libur')
+            ->when($request->filled('from'), fn($q) => $q->whereDate('tanggal', '>=', $request->from))
+            ->when($request->filled('to'), fn($q) => $q->whereDate('tanggal', '<=', $request->to))
+            ->groupBy('warung_id')
+            ->with('warung')
+            ->get();
+
+        return view('warung.laporan-libur', compact('warungs', 'liburs', 'summary'));
     }
 }

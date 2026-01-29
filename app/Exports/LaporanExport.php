@@ -21,16 +21,25 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
 {
     protected $tanggalAwal;
     protected $tanggalAkhir;
+    protected $warungId;
 
-    public function __construct($tanggalAwal, $tanggalAkhir)
+    public function __construct($tanggalAwal, $tanggalAkhir, $warungId = null)
     {
         $this->tanggalAwal = $tanggalAwal;
         $this->tanggalAkhir = $tanggalAkhir;
+        $this->warungId = $warungId;
     }
 
     public function collection()
     {
-        $warungs = Warung::aktif()->get();
+        $allWarungs = Warung::aktif()->get();
+        
+        // Filter by warung if specified
+        if ($this->warungId) {
+            $warungs = $allWarungs->where('id', $this->warungId);
+        } else {
+            $warungs = $allWarungs;
+        }
         
         $data = $warungs->map(function ($warung) {
             $transaksi = TransaksiHarian::where('warung_id', $warung->id)

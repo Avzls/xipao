@@ -28,15 +28,16 @@ class PengeluaranOperasional extends Model
 
     // Constants for jenis_pengeluaran
     const JENIS = [
-        'regulator' => 'Regulator',
-        'harian' => 'Harian',
-        'mika' => 'Mika',
+        'gaji' => 'Gaji',
         'gas' => 'Gas',
+        'harian' => 'Harian',
         'kebersihan' => 'Kebersihan',
-        'listrik' => 'Listrik',
-        'plastik' => 'Plastik',
-        'las' => 'Las',
         'lainnya' => 'Lainnya',
+        'las' => 'Las',
+        'listrik' => 'Listrik',
+        'mika' => 'Mika',
+        'plastik' => 'Plastik',
+        'regulator' => 'Regulator',
     ];
 
     // Accessors

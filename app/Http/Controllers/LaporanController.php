@@ -15,11 +15,19 @@ class LaporanController extends Controller
 {
     public function konsolidasi(Request $request)
     {
-        $warungs = Warung::aktif()->get();
+        $allWarungs = Warung::aktif()->orderBy('nama_warung')->get();
         
         // Date range filter
         $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
+        
+        // Warung filter
+        $warungId = $request->input('warung_id');
+        if ($warungId) {
+            $warungs = $allWarungs->where('id', $warungId);
+        } else {
+            $warungs = $allWarungs;
+        }
         
         $data = $warungs->map(function ($warung) use ($tanggalAwal, $tanggalAkhir) {
             $transaksi = TransaksiHarian::where('warung_id', $warung->id)
@@ -49,25 +57,34 @@ class LaporanController extends Controller
             'dimsum' => $data->sum('dimsum'),
         ];
         
-        return view('laporan.konsolidasi', compact('data', 'totals', 'tanggalAwal', 'tanggalAkhir'));
+        return view('laporan.konsolidasi', compact('data', 'totals', 'tanggalAwal', 'tanggalAkhir', 'allWarungs', 'warungId'));
     }
 
     public function exportExcel(Request $request)
     {
         $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
+        $warungId = $request->input('warung_id');
         
         $filename = "laporan_{$tanggalAwal}_sd_{$tanggalAkhir}.xlsx";
         
-        return Excel::download(new LaporanExport($tanggalAwal, $tanggalAkhir), $filename);
+        return Excel::download(new LaporanExport($tanggalAwal, $tanggalAkhir, $warungId), $filename);
     }
 
     public function exportPdf(Request $request)
     {
-        $warungs = Warung::aktif()->get();
+        $allWarungs = Warung::aktif()->get();
         
         $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
+        $warungId = $request->input('warung_id');
+        
+        // Filter by warung if specified
+        if ($warungId) {
+            $warungs = $allWarungs->where('id', $warungId);
+        } else {
+            $warungs = $allWarungs;
+        }
         
         $data = $warungs->map(function ($warung) use ($tanggalAwal, $tanggalAkhir) {
             $transaksi = TransaksiHarian::where('warung_id', $warung->id)
@@ -100,6 +117,6 @@ class LaporanController extends Controller
         
         $pdf = Pdf::loadView('laporan.pdf', compact('data', 'totals', 'tanggalAwal', 'tanggalAkhir', 'periodeLabel'));
         
-        return $pdf->download("laporan_{$tanggalAwal}_sd_{$tanggalAkhir}.pdf");
+        return $pdf->download("laporan_{$tanggalAwal}_{$tanggalAkhir}.pdf");
     }
 }

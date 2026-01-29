@@ -9,11 +9,23 @@ use Illuminate\Http\Request;
 
 class StokController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $items = Item::with(['stokGudang', 'latestOpname'])->orderBy('nama_item')->get();
         
-        return view('stok.index', compact('items'));
+        // History dari restok dengan filter tanggal
+        $query = \App\Models\RestokGudang::with('item')->orderBy('tanggal_masuk', 'desc');
+        
+        if ($request->filled('from')) {
+            $query->whereDate('tanggal_masuk', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('tanggal_masuk', '<=', $request->to);
+        }
+        
+        $histories = $query->take(50)->get();
+        
+        return view('stok.index', compact('items', 'histories'));
     }
 
     public function create()
@@ -125,5 +137,81 @@ class StokController extends Controller
 
         return redirect()->route('stok.index')
             ->with('success', 'Stock opname berhasil! Stok sudah disesuaikan.');
+    }
+
+    // History Restok
+    public function history(Request $request)
+    {
+        $query = \App\Models\RestokGudang::with('item')->orderBy('tanggal_masuk', 'desc');
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('item', function ($q) use ($search) {
+                $q->where('nama_item', 'like', "%{$search}%");
+            })->orWhere('supplier', 'like', "%{$search}%");
+        }
+
+        // Filter by date
+        if ($request->filled('from')) {
+            $query->whereDate('tanggal_masuk', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('tanggal_masuk', '<=', $request->to);
+        }
+
+        $histories = $query->paginate(15)->withQueryString();
+
+        return view('stok.history', compact('histories'));
+    }
+
+    // Restok - Tambah Stock ke Item Existing
+    public function restok(Item $stok)
+    {
+        return view('stok.restok', ['item' => $stok]);
+    }
+
+    public function storeRestok(Request $request, Item $stok)
+    {
+        $validated = $request->validate([
+            'qty_masuk' => 'required|integer|min:1',
+            'tanggal_masuk' => 'required|date',
+        ]);
+
+        // Create restok record
+        \App\Models\RestokGudang::create([
+            'item_id' => $stok->id,
+            'qty_masuk' => $validated['qty_masuk'],
+            'tanggal_masuk' => $validated['tanggal_masuk'],
+        ]);
+
+        // Update stock
+        $stok->stokGudang()->updateOrCreate(
+            ['item_id' => $stok->id],
+            ['qty' => ($stok->stokGudang->qty ?? 0) + $validated['qty_masuk']]
+        );
+
+        return redirect()->route('stok.index')
+            ->with('success', 'Stock berhasil ditambahkan: +' . $validated['qty_masuk'] . ' ' . $stok->nama_item);
+    }
+
+    public function exportHistoryPdf(Request $request)
+    {
+        $query = \App\Models\RestokGudang::with('item')->orderBy('tanggal_masuk', 'desc');
+        
+        $from = $request->input('from', now()->startOfMonth()->format('Y-m-d'));
+        $to = $request->input('to', now()->format('Y-m-d'));
+        
+        $query->whereDate('tanggal_masuk', '>=', $from);
+        $query->whereDate('tanggal_masuk', '<=', $to);
+        
+        $histories = $query->get();
+        $total = $histories->sum('qty_masuk');
+        
+        $periodeLabel = \Carbon\Carbon::parse($from)->translatedFormat('d M Y') . ' - ' . \Carbon\Carbon::parse($to)->translatedFormat('d M Y');
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('stok.history-pdf', compact('histories', 'total', 'periodeLabel'));
+        
+        return $pdf->download('history-stock-masuk-' . $from . '-' . $to . '.pdf');
     }
 }
