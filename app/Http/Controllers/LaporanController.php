@@ -39,6 +39,15 @@ class LaporanController extends Controller
             
             $omset = $transaksi->sum('omset');
             $profit = $omset - $operasional;
+            $hariKerja = $transaksi->count();
+            
+            // Cek jumlah hari libur dalam periode
+            $hariLibur = \App\Models\WarungLibur::where('warung_id', $warung->id)
+                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
+                ->count();
+            
+            // Flag libur: tidak ada transaksi tapi ada jadwal libur
+            $isLibur = ($hariKerja == 0 && $hariLibur > 0);
             
             return [
                 'warung' => $warung,
@@ -46,7 +55,9 @@ class LaporanController extends Controller
                 'operasional' => $operasional,
                 'net_profit' => $profit,
                 'dimsum' => $transaksi->sum('dimsum_terjual'),
-                'hari_kerja' => $transaksi->count(),
+                'hari_kerja' => $hariKerja,
+                'hari_libur' => $hariLibur,
+                'is_libur' => $isLibur,
             ];
         });
         
@@ -96,6 +107,14 @@ class LaporanController extends Controller
             
             $omset = $transaksi->sum('omset');
             $profit = $omset - $operasional;
+            $hariKerja = $transaksi->count();
+            
+            // Cek jumlah hari libur dalam periode
+            $hariLibur = \App\Models\WarungLibur::where('warung_id', $warung->id)
+                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
+                ->count();
+            
+            $isLibur = ($hariKerja == 0 && $hariLibur > 0);
             
             return [
                 'warung' => $warung->nama_warung,
@@ -103,6 +122,9 @@ class LaporanController extends Controller
                 'operasional' => $operasional,
                 'net_profit' => $profit,
                 'dimsum' => $transaksi->sum('dimsum_terjual'),
+                'hari_kerja' => $hariKerja,
+                'hari_libur' => $hariLibur,
+                'is_libur' => $isLibur,
             ];
         });
         

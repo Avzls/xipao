@@ -51,14 +51,23 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
             
             $omset = $transaksi->sum('omset');
             $profit = $omset - $operasional;
+            $hariKerja = $transaksi->count();
+            $dimsum = $transaksi->sum('dimsum_terjual');
+            
+            // Cek jumlah hari libur dalam periode
+            $hariLibur = \App\Models\WarungLibur::where('warung_id', $warung->id)
+                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
+                ->count();
+            
+            $isLibur = ($hariKerja == 0 && $hariLibur > 0);
             
             return [
                 'warung' => $warung->nama_warung,
-                'dimsum' => $transaksi->sum('dimsum_terjual'),
-                'omset' => $omset,
+                'dimsum' => $isLibur ? 'LIBUR' : $dimsum,
+                'omset' => $isLibur ? 0 : $omset,
                 'operasional' => $operasional,
                 'profit' => $profit,
-                'hari_kerja' => $transaksi->count(),
+                'hari_kerja' => $isLibur ? 'LIBUR (' . $hariLibur . ' hari)' : $hariKerja,
             ];
         });
 

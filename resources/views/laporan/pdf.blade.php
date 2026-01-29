@@ -87,11 +87,23 @@
         </thead>
         <tbody>
             @foreach($data as $index => $row)
-                <tr>
+                <tr style="{{ ($row['is_libur'] ?? false) ? 'background-color: #fef9c3;' : '' }}">
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $row['warung'] }}</td>
-                    <td class="text-center">{{ number_format($row['dimsum'], 0, ',', '.') }}</td>
-                    <td class="text-right">Rp {{ number_format($row['omset'], 0, ',', '.') }}</td>
+                    <td class="text-center">
+                        @if($row['is_libur'] ?? false)
+                            <span style="color: #ca8a04;">LIBUR</span>
+                        @else
+                            {{ number_format($row['dimsum'], 0, ',', '.') }}
+                        @endif
+                    </td>
+                    <td class="text-right">
+                        @if($row['is_libur'] ?? false)
+                            <span style="color: #ca8a04;">Rp 0</span>
+                        @else
+                            Rp {{ number_format($row['omset'], 0, ',', '.') }}
+                        @endif
+                    </td>
                     <td class="text-right negative">Rp {{ number_format($row['operasional'], 0, ',', '.') }}</td>
                     <td class="text-right {{ $row['net_profit'] >= 0 ? 'positive' : 'negative' }}">Rp {{ number_format($row['net_profit'], 0, ',', '.') }}</td>
                 </tr>

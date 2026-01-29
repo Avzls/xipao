@@ -90,11 +90,29 @@
                 </thead>
                 <tbody>
                     @foreach($data as $row)
-                        <tr>
+                        <tr class="{{ $row['is_libur'] ? 'bg-yellow-50' : '' }}">
                             <td class="font-medium">{{ $row['warung']->nama_warung }}</td>
-                            <td>{{ $row['hari_kerja'] }}</td>
-                            <td>{{ number_format($row['dimsum'], 0, ',', '.') }}</td>
-                            <td>Rp {{ number_format($row['omset'], 0, ',', '.') }}</td>
+                            <td>
+                                @if($row['is_libur'])
+                                    <span class="badge bg-yellow-100 text-yellow-800">LIBUR ({{ $row['hari_libur'] }} hari)</span>
+                                @else
+                                    {{ $row['hari_kerja'] }}
+                                @endif
+                            </td>
+                            <td>
+                                @if($row['is_libur'])
+                                    <span class="text-yellow-600">-</span>
+                                @else
+                                    {{ number_format($row['dimsum'], 0, ',', '.') }}
+                                @endif
+                            </td>
+                            <td>
+                                @if($row['is_libur'])
+                                    <span class="text-yellow-600">Rp 0</span>
+                                @else
+                                    Rp {{ number_format($row['omset'], 0, ',', '.') }}
+                                @endif
+                            </td>
                             <td class="text-red-600">Rp {{ number_format($row['operasional'], 0, ',', '.') }}</td>
                             <td class="font-semibold {{ $row['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">Rp {{ number_format($row['net_profit'], 0, ',', '.') }}</td>
                         </tr>
