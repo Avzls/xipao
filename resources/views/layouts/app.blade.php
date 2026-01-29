@@ -61,6 +61,14 @@
                     <span x-show="!sidebarMinimized">Daftar Warung</span>
                 </a>
 
+                <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Stok</div>
+                <a href="{{ route('stok.index') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('stok.*') ? 'true' : 'false' }} }" title="Stock Besar">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <span x-show="!sidebarMinimized">Stok Besar</span>
+                </a>
+
                 <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Input</div>
                 <a href="{{ route('transaksi.create') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('transaksi.create') ? 'true' : 'false' }} }" title="Input Transaksi">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,14 +81,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                     <span x-show="!sidebarMinimized">Biaya Operasional</span>
-                </a>
-
-                <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Stok</div>
-                <a href="{{ route('stok.index') }}" class="sidebar-link" :class="{ 'justify-center': sidebarMinimized, 'active': {{ request()->routeIs('stok.*') ? 'true' : 'false' }} }" title="Stock Besar">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                    <span x-show="!sidebarMinimized">Stok Besar</span>
                 </a>
 
                 <div class="mt-4 mb-1 px-2 text-xs font-semibold text-white/40 uppercase" x-show="!sidebarMinimized">Mutasi</div>

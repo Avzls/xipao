@@ -46,12 +46,12 @@
         
         <div class="stat-card">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <span class="text-2xl">🏪</span>
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">📈</span>
                 </div>
                 <div>
-                    <p class="stat-label">Warung Aktif</p>
-                    <p class="stat-value text-amber-600">{{ $warungs->count() }}</p>
+                    <p class="stat-label">Profit Hari Ini</p>
+                    <p class="stat-value {{ ($totalOmsetHariIni - $operasionalHariIni) >= 0 ? 'text-purple-600' : 'text-red-600' }}">Rp {{ number_format($totalOmsetHariIni - $operasionalHariIni, 0, ',', '.') }}</p>
                 </div>
             </div>
         </div>
