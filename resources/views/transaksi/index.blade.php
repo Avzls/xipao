@@ -383,16 +383,27 @@ function transaksiPage() {
             return new Intl.NumberFormat('id-ID').format(num);
         },
         
-        async deleteItem(id) {
-            const confirmed = await confirmDelete('transaksi ini');
-            if (confirmed) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/transaksi/' + id;
-                form.innerHTML = `<input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').content}"><input type="hidden" name="_method" value="DELETE">`;
-                document.body.appendChild(form);
-                form.submit();
-            }
+        deleteItem(id) {
+            Swal.fire({
+                title: 'Hapus Transaksi?',
+                text: 'Data yang dihapus tidak bisa dikembalikan!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/transaksi/' + id;
+                    form.innerHTML = `<input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').content}"><input type="hidden" name="_method" value="DELETE">`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         }
     }
 }

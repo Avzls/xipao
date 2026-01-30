@@ -248,11 +248,23 @@
         });
     }
     
-    // Handle delete with form - simplified
+    // Handle delete with form - using SweetAlert2
     function handleDelete(form, itemName) {
-        if (confirm('Yakin hapus ' + (itemName || 'data ini') + '? Tindakan ini tidak dapat dibatalkan.')) {
-            form.submit();
-        }
+        Swal.fire({
+            title: 'Hapus Data?',
+            text: 'Yakin hapus ' + (itemName || 'data ini') + '? Tindakan ini tidak dapat dibatalkan.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
     }
     </script>
 </body>
