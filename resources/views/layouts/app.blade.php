@@ -248,10 +248,9 @@
         });
     }
     
-    // Handle delete with form
-    async function handleDelete(form, itemName) {
-        const confirmed = await confirmDelete(itemName);
-        if (confirmed) {
+    // Handle delete with form - simplified
+    function handleDelete(form, itemName) {
+        if (confirm('Yakin hapus ' + (itemName || 'data ini') + '? Tindakan ini tidak dapat dibatalkan.')) {
             form.submit();
         }
     }
