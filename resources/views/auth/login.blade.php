@@ -10,8 +10,8 @@
     <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl mb-4">
-                <span class="text-3xl">🥟</span>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-primary-600 rounded-2xl mb-4 overflow-hidden">
+                <img src="{{ asset('images/logo.jpg') }}" alt="Xipao" class="w-full h-full object-cover">
             </div>
             <h1 class="text-2xl font-bold text-text-primary">Xipao</h1>
             <p class="text-text-secondary mt-1">Sistem Manajemen Stok</p>

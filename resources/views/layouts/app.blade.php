@@ -30,13 +30,13 @@
             <!-- Logo -->
             <div class="px-4 py-4 border-b border-primary-700 flex items-center justify-between">
                 <div class="flex items-center gap-2" x-show="!sidebarMinimized">
-                    <span class="text-2xl">🥟</span>
+                    <img src="{{ asset('images/logo.jpg') }}" alt="Xipao" class="w-10 h-10 rounded-lg object-cover">
                     <div>
                         <h1 class="text-lg font-bold text-white">Xipao</h1>
                         <p class="text-xs text-white/60">Sistem Stok</p>
                     </div>
                 </div>
-                <span class="text-2xl" x-show="sidebarMinimized">🥟</span>
+                <img src="{{ asset('images/logo.jpg') }}" alt="Xipao" class="w-8 h-8 rounded-lg object-cover" x-show="sidebarMinimized">
                 <button @click="sidebarMinimized = !sidebarMinimized" class="hidden lg:block p-1 text-white/60 hover:text-white">
                     <svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" :class="{'rotate-180': sidebarMinimized}">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
