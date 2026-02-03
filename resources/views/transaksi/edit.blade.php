@@ -29,16 +29,10 @@
                 <!-- Penjualan Dimsum -->
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 class="font-semibold text-blue-800 mb-3">🥟 Penjualan Dimsum</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="dimsum_terjual" class="form-label">Dimsum Terjual (pcs) <span class="text-red-500">*</span></label>
-                            <input type="number" name="dimsum_terjual" id="dimsum_terjual" class="form-input" x-model.number="dimsum" min="0" required>
-                            <p class="text-xs text-amber-600 mt-1">⚠️ Ubah ini akan adjust stok</p>
-                        </div>
-                        <div>
-                            <label class="form-label">Penjualan</label>
-                            <div class="bg-white text-blue-700 font-bold px-4 py-2.5 rounded-lg border border-blue-200" x-text="formatRupiah(dimsum * harga)"></div>
-                        </div>
+                    <div>
+                        <label for="dimsum_terjual" class="form-label">Dimsum Terjual (pcs) <span class="text-red-500">*</span></label>
+                        <input type="number" name="dimsum_terjual" id="dimsum_terjual" class="form-input" x-model.number="dimsum" min="0" required>
+                        <p class="text-xs text-amber-600 mt-1">⚠️ Ubah ini akan adjust stok</p>
                     </div>
                 </div>
 
@@ -89,6 +83,12 @@ function transaksiForm() {
         dimsum: {{ old('dimsum_terjual', $transaksi->dimsum_terjual) }},
         modal: {{ old('modal', $transaksi->modal) }},
         cash: {{ old('cash', $transaksi->cash) }},
+        
+        init() {
+            this.$watch('dimsum', (value) => {
+                this.modal = value * this.harga;
+            });
+        },
         
         get omset() {
             return this.cash - this.modal;
