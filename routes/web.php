@@ -8,6 +8,7 @@ use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\StokController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\OperasionalController;
+use App\Http\Controllers\SettingsController;
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -56,4 +57,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan/konsolidasi', [LaporanController::class, 'konsolidasi'])->name('laporan.konsolidasi');
     Route::get('/laporan/export/excel', [LaporanController::class, 'exportExcel'])->name('laporan.export.excel');
     Route::get('/laporan/export/pdf', [LaporanController::class, 'exportPdf'])->name('laporan.export.pdf');
+    
+    // Settings
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');
+    Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
 });

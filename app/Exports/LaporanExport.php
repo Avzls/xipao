@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Warung;
 use App\Models\TransaksiHarian;
+use App\Models\TransaksiItem;
 use App\Models\PengeluaranOperasional;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -42,7 +43,7 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
         }
         
         $data = $warungs->map(function ($warung) {
-            $transaksi = TransaksiHarian::where('warung_id', $warung->id)
+            $transaksi = TransaksiHarian::with('transaksiItems.item')->where('warung_id', $warung->id)
                 ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
             
             $operasional = PengeluaranOperasional::where('warung_id', $warung->id)
@@ -56,14 +57,20 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
             
             $omset = $transaksi->sum('omset');
             $profit = $omset - $operasional;
-            $dimsum = $transaksi->sum('dimsum_terjual');
+            
+            // Build product detail string
+            $allItems = $transaksi->get()->flatMap->transaksiItems;
+            $produkDetail = $allItems->groupBy(fn($ti) => $ti->item->nama_item ?? 'Unknown')
+                ->map(fn($group) => $group->sum('qty'))
+                ->sortDesc();
+            $produkText = $produkDetail->map(fn($qty, $nama) => "{$nama}: {$qty}")->implode(', ');
             
             $totalTransaksi = $hariBuka + $hariTutup;
             $isTutup = ($totalTransaksi > 0 && $hariBuka == 0);
             
             return [
                 'warung' => $warung->nama_warung,
-                'dimsum' => $isTutup ? 'TUTUP' : $dimsum,
+                'produk' => $isTutup ? 'TUTUP' : ($produkText ?: '-'),
                 'omset' => $isTutup ? 0 : $omset,
                 'operasional' => $operasional,
                 'profit' => $profit,
@@ -75,11 +82,11 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
         $totalOmset = $data->sum('omset');
         $totalOperasional = $data->sum('operasional');
         $totalProfit = $data->sum('profit');
-        $totalDimsum = $data->sum('dimsum');
+        $totalProduk = $data->sum('produk');
         
         $data->push([
             'warung' => 'TOTAL',
-            'dimsum' => $totalDimsum,
+            'produk' => $totalProduk,
             'omset' => $totalOmset,
             'operasional' => $totalOperasional,
             'profit' => $totalProfit,
@@ -93,7 +100,7 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
     {
         return [
             'Warung',
-            'Dimsum',
+            'Produk Terjual',
             'Omset (Rp)',
             'Operasional (Rp)',
             'Profit (Rp)',

@@ -70,6 +70,10 @@
             color: #dc2626;
             font-weight: bold;
         }
+        .items-list {
+            font-size: 8px;
+            color: #555;
+        }
         .footer {
             margin-top: 30px;
             text-align: center;
@@ -92,7 +96,7 @@
                 <th>Tanggal</th>
                 <th>Warung</th>
                 <th class="text-center">Status</th>
-                <th class="text-center">Dimsum</th>
+                <th>Produk Terjual</th>
                 <th class="text-right">Modal</th>
                 <th class="text-right">Cash</th>
                 <th class="text-right">Omset</th>
@@ -107,11 +111,21 @@
                     <td class="text-center {{ $tx->status === 'tutup' ? 'status-tutup' : 'status-buka' }}">
                         {{ strtoupper($tx->status) }}
                     </td>
-                    <td class="text-center">
+                    <td>
                         @if($tx->status === 'tutup')
                             -
+                        @elseif($tx->transaksiItems->count() > 0)
+                            <div class="items-list">
+                                @foreach($tx->transaksiItems as $ti)
+                                    {{ $ti->item->nama_item }} ({{ $ti->qty }})<br>
+                                @endforeach
+                            </div>
                         @else
-                            {{ number_format($tx->dimsum_terjual, 0, ',', '.') }}
+                            @if($tx->dimsum_terjual > 0)
+                                Dimsum ({{ $tx->dimsum_terjual }})
+                            @else
+                                -
+                            @endif
                         @endif
                     </td>
                     <td class="text-right">Rp {{ number_format($tx->modal, 0, ',', '.') }}</td>
@@ -128,7 +142,7 @@
             @if($transaksis->count() > 0)
             <tr class="total-row">
                 <td colspan="4">TOTAL</td>
-                <td class="text-center">{{ number_format($totals['dimsum'], 0, ',', '.') }}</td>
+                <td>{{ number_format($totals['items_qty'], 0, ',', '.') }} pcs</td>
                 <td class="text-right">Rp {{ number_format($totals['modal'], 0, ',', '.') }}</td>
                 <td class="text-right">-</td>
                 <td class="text-right {{ $totals['omset'] >= 0 ? 'positive' : 'negative' }}">

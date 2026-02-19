@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+backup-xipao.sh
+rclone_xipao.conf

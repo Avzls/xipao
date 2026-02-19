@@ -32,8 +32,8 @@
         </div>
         <div class="stat-card flex items-center justify-between">
             <div>
-                <p class="stat-label">Total Dimsum</p>
-                <p class="stat-value text-blue-600">{{ number_format($summary['total_dimsum'], 0, ',', '.') }} pcs</p>
+                <p class="stat-label">Total Produk Terjual</p>
+                <p class="stat-value text-blue-600">{{ number_format($summary['total_items'], 0, ',', '.') }} pcs</p>
             </div>
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@
                 </svg>
                 Export PDF
             </a>
-            <button type="button" @click="showModal = true" class="btn btn-primary">
+            <button type="button" @click="openCreateModal()" class="btn btn-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -117,7 +117,7 @@
                         <th class="text-center cursor-pointer hover:bg-primary-700" @click="sortBy('tanggal')">Tanggal</th>
                         <th class="text-center cursor-pointer hover:bg-primary-700" @click="sortBy('warung')">Warung</th>
                         <th class="text-center">Status</th>
-                        <th class="text-center cursor-pointer hover:bg-primary-700" @click="sortBy('dimsum')">Dimsum</th>
+                        <th class="text-center">Produk</th>
                         <th class="text-center cursor-pointer hover:bg-primary-700" @click="sortBy('omset')">Omset</th>
                         <th class="text-center">Aksi</th>
                     </tr>
@@ -132,7 +132,14 @@
                                     class="px-2 py-1 rounded-full text-xs font-medium"
                                     x-text="tx.status === 'tutup' ? 'TUTUP' : 'BUKA'"></span>
                             </td>
-                            <td class="text-center" x-text="tx.status === 'tutup' ? '-' : formatNumber(tx.dimsum)"></td>
+                            <td class="text-center">
+                                <template x-if="tx.status === 'tutup'">
+                                    <span class="text-gray-400">-</span>
+                                </template>
+                                <template x-if="tx.status !== 'tutup'">
+                                    <span class="text-xs" x-text="tx.items_count > 0 ? tx.items_summary : '-'"></span>
+                                </template>
+                            </td>
                             <td class="text-center font-semibold" :class="tx.omset >= 0 ? 'text-emerald-600' : 'text-red-600'" x-text="'Rp ' + formatNumber(tx.omset)"></td>
                             <td class="text-center">
                                 <div class="flex items-center justify-center gap-2">
@@ -176,13 +183,17 @@
 
     <!-- Modal Create -->
     <div x-show="showModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showModal = false">
-        <div class="flex items-center justify-center min-h-screen px-4">
-            <div class="fixed inset-0 bg-black/50" @click="showModal = false"></div>
+        <div class="flex items-start justify-center min-h-screen px-4 py-8">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showModal = false"></div>
             
-            <div class="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6" @click.stop>
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold">Tambah Transaksi</h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full" @click.stop>
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-primary-600 to-primary-700 rounded-t-2xl">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        Tambah Transaksi
+                    </h3>
+                    <button @click="showModal = false" class="text-white/80 hover:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -191,100 +202,166 @@
 
                 <form action="{{ route('transaksi.store') }}" method="POST">
                     @csrf
-                    
-                    <!-- Validation Errors -->
-                    @if($errors->any())
-                    <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p class="text-red-700 font-medium text-sm">Terjadi kesalahan:</p>
-                        <ul class="list-disc list-inside text-sm text-red-600 mt-1">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    @endif
-                    
-                    <div class="space-y-4">
-                        <!-- Warung & Tanggal -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Warung *</label>
-                                <select name="warung_id" class="form-select" required>
-                                    <option value="">-- Pilih --</option>
-                                    @foreach($warungs as $warung)
-                                        <option value="{{ $warung->id }}">{{ $warung->nama_warung }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">Tanggal *</label>
-                                <input type="date" name="tanggal" class="form-input" value="{{ date('Y-m-d') }}" required>
-                            </div>
+                    <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+                        
+                        @if($errors->any())
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <ul class="list-disc list-inside text-sm text-red-600">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                         </div>
-
-                        <!-- Toggle Buka/Tutup -->
-                        <div class="p-4 rounded-xl border-2 transition-all duration-300"
-                            :class="isTutup ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-300'">
-                            <input type="hidden" name="status" x-model="statusValue">
-                            <div class="flex items-center justify-between cursor-pointer" @click="toggleStatus()">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300"
-                                        :class="isTutup ? 'bg-red-200' : 'bg-emerald-200'">
-                                        <span class="text-xl" x-text="isTutup ? '🔒' : '🔓'"></span>
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-base" :class="isTutup ? 'text-red-700' : 'text-emerald-700'" x-text="isTutup ? 'WARUNG TUTUP' : 'WARUNG BUKA'"></p>
-                                        <p class="text-xs text-gray-500" x-text="isTutup ? 'Semua nilai akan di-set ke 0' : 'Klik untuk ubah status'"></p>
-                                    </div>
+                        @endif
+                        
+                        <!-- Step 1: Warung, Tanggal, Status -->
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">📋 Info Transaksi</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label text-sm">Warung</label>
+                                    <select name="warung_id" class="form-select" required>
+                                        <option value="">-- Pilih --</option>
+                                        @foreach($warungs as $warung)
+                                            <option value="{{ $warung->id }}">{{ $warung->nama_warung }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <!-- Toggle Switch -->
-                                <div class="relative w-14 h-7 rounded-full transition-colors duration-300 shadow-inner"
-                                    :class="isTutup ? 'bg-red-500' : 'bg-emerald-500'">
-                                    <div class="absolute top-1 left-1 bg-white rounded-full h-5 w-5 shadow-md transition-transform duration-300 ease-out flex items-center justify-center"
-                                        :class="isTutup ? 'translate-x-7' : 'translate-x-0'">
-                                        <span class="text-xs" :class="isTutup ? 'text-red-500' : 'text-emerald-500'" x-text="isTutup ? '✕' : '✓'"></span>
-                                    </div>
+                                <div>
+                                    <label class="form-label text-sm">Tanggal</label>
+                                    <input type="date" name="tanggal" class="form-input" value="{{ date('Y-m-d') }}" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Status Toggle -->
+                            <div class="mt-3 flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200"
+                                :class="isTutup ? 'bg-red-50 border border-red-200' : 'bg-emerald-50 border border-emerald-200'"
+                                @click="toggleStatus()">
+                                <input type="hidden" name="status" x-model="statusValue">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg" x-text="isTutup ? '🔴' : '🟢'"></span>
+                                    <span class="font-semibold text-sm" :class="isTutup ? 'text-red-700' : 'text-emerald-700'" x-text="isTutup ? 'WARUNG TUTUP' : 'WARUNG BUKA'"></span>
+                                </div>
+                                <div class="relative w-12 h-6 rounded-full transition-colors duration-200"
+                                    :class="isTutup ? 'bg-red-400' : 'bg-emerald-400'">
+                                    <div class="absolute top-0.5 left-0.5 bg-white rounded-full h-5 w-5 shadow transition-transform duration-200"
+                                        :class="isTutup ? 'translate-x-6' : 'translate-x-0'"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Dimsum -->
-                        <div class="p-4 rounded-lg" :class="isTutup ? 'bg-gray-100 opacity-50' : 'bg-blue-50'">
-                            <label class="form-label" :class="isTutup ? 'text-gray-500' : ''">Dimsum Terjual (pcs) *</label>
-                            <input type="number" name="dimsum_terjual" class="form-input" x-model.number="dimsum" :readonly="isTutup" min="0" required>
-                            <p class="text-xs mt-1" :class="isTutup ? 'text-gray-400' : 'text-blue-600'">Penjualan: <span x-text="formatRupiah(dimsum * harga)"></span></p>
+                        <!-- Step 2: Produk -->
+                        <div class="rounded-xl border-2 transition-all duration-200" :class="isTutup ? 'border-gray-200 bg-gray-50 opacity-40' : 'border-blue-200 bg-blue-50/50'">
+                            <div class="flex items-center justify-between px-4 py-3 border-b" :class="isTutup ? 'border-gray-200' : 'border-blue-200'">
+                                <p class="font-semibold text-sm" :class="isTutup ? 'text-gray-400' : 'text-blue-800'">📦 Produk Terjual</p>
+                                <button type="button" @click="addItem()" :disabled="isTutup" 
+                                    class="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
+                                    :class="isTutup ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
+                                    Tambah
+                                </button>
+                            </div>
+                            
+                            <div class="p-4 space-y-2">
+                                <template x-if="formItems.length === 0 && !isTutup">
+                                    <div class="text-center py-6">
+                                        <p class="text-gray-400 text-sm">Belum ada produk</p>
+                                        <p class="text-gray-300 text-xs mt-1">Klik "Tambah" untuk menambah produk</p>
+                                    </div>
+                                </template>
+                                
+                                <template x-for="(fi, idx) in formItems" :key="idx">
+                                    <div class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+                                        <div class="flex items-center gap-3">
+                                            <!-- Item Number -->
+                                            <div class="w-7 h-7 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" x-text="idx + 1"></div>
+                                            
+                                            <!-- Product Select -->
+                                            <div class="flex-1 min-w-0">
+                                                <select :name="'items['+idx+'][item_id]'" x-model="fi.item_id" @change="onItemSelect(idx)" 
+                                                    class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-400 focus:ring-1 focus:ring-blue-400" :disabled="isTutup" required>
+                                                    <option value="">Pilih produk...</option>
+                                                    <template x-for="item in availableItems" :key="item.id">
+                                                        <option :value="item.id" x-text="item.nama"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Qty -->
+                                            <div class="w-20 flex-shrink-0">
+                                                <input type="number" :name="'items['+idx+'][qty]'" x-model.number="fi.qty" min="1" placeholder="Qty"
+                                                    class="w-full text-sm text-center border border-gray-200 rounded-lg px-2 py-2 focus:border-blue-400 focus:ring-1 focus:ring-blue-400" :disabled="isTutup" required>
+                                            </div>
+                                            
+                                            <!-- Subtotal -->
+                                            <div class="w-28 flex-shrink-0 text-right">
+                                                <p class="text-sm font-bold text-blue-700" x-text="formatRupiah(fi.qty * fi.harga)"></p>
+                                                <p class="text-[10px] text-gray-400" x-show="fi.harga > 0" x-text="'@' + formatRupiah(fi.harga) + '/' + fi.satuan"></p>
+                                            </div>
+                                            
+                                            <!-- Delete -->
+                                            <button type="button" @click="removeItem(idx)" class="flex-shrink-0 w-7 h-7 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                        <!-- Stock Warning -->
+                                        <template x-if="fi.item_id && getItemStok(fi.item_id) !== null">
+                                            <p class="text-[11px] mt-1.5 ml-10" :class="fi.qty > getItemStok(fi.item_id) ? 'text-red-500 font-medium' : 'text-gray-400'">
+                                                Stok tersedia: <span x-text="getItemStok(fi.item_id)"></span> <span x-text="fi.satuan"></span>
+                                                <span x-show="fi.qty > getItemStok(fi.item_id)"> — ⚠️ Melebihi stok!</span>
+                                            </p>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Total Strip -->
+                            <template x-if="formItems.length > 0">
+                                <div class="px-4 py-3 border-t flex justify-between items-center" :class="isTutup ? 'border-gray-200' : 'border-blue-200 bg-blue-100/50'">
+                                    <span class="text-sm font-semibold" :class="isTutup ? 'text-gray-400' : 'text-blue-800'">Total Penjualan:</span>
+                                    <span class="text-lg font-bold" :class="isTutup ? 'text-gray-400' : 'text-blue-700'" x-text="formatRupiah(totalItemsSubtotal)"></span>
+                                </div>
+                            </template>
                         </div>
 
-                        <!-- Modal & Cash -->
-                        <div class="grid grid-cols-2 gap-4" :class="isTutup ? 'opacity-50' : ''">
-                            <div>
-                                <label class="form-label">Modal (Rp) *</label>
-                                <input type="number" name="modal" class="form-input" x-model.number="modal" :readonly="isTutup" min="0" required>
+                        <!-- Step 3: Keuangan -->
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100" :class="isTutup ? 'opacity-40' : ''">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">💰 Keuangan</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label text-sm">Modal (Rp)</label>
+                                    <input type="number" name="modal" class="form-input bg-white" x-model.number="modal" min="0" required :disabled="isTutup">
+                                    <p class="text-[11px] text-gray-400 mt-1" x-show="!isTutup && totalItemsSubtotal > 0">= Total Penjualan (otomatis)</p>
+                                </div>
+                                <div>
+                                    <label class="form-label text-sm">Cash Masuk (Rp)</label>
+                                    <input type="number" name="cash" class="form-input bg-white" x-model.number="cash" min="0" required :disabled="isTutup">
+                                </div>
                             </div>
-                            <div>
-                                <label class="form-label">Cash Masuk (Rp) *</label>
-                                <input type="number" name="cash" class="form-input" x-model.number="cash" :readonly="isTutup" min="0" required>
-                            </div>
-                        </div>
-
-                        <!-- Omset -->
-                        <div class="p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200">
-                            <div class="flex items-center justify-between">
-                                <span class="font-medium text-emerald-800">💰 Omset:</span>
-                                <span class="text-xl font-bold" :class="omset >= 0 ? 'text-emerald-600' : 'text-red-600'" x-text="formatRupiah(omset)"></span>
+                            
+                            <!-- Omset Result -->
+                            <div class="mt-4 p-3 rounded-lg bg-gradient-to-r" :class="omset >= 0 ? 'from-emerald-100 to-emerald-50 border border-emerald-200' : 'from-red-100 to-red-50 border border-red-200'">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-semibold" :class="omset >= 0 ? 'text-emerald-700' : 'text-red-700'">Omset (Cash − Modal):</span>
+                                    <span class="text-xl font-bold" :class="omset >= 0 ? 'text-emerald-600' : 'text-red-600'" x-text="formatRupiah(omset)"></span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Keterangan -->
                         <div>
-                            <label class="form-label">Keterangan</label>
-                            <textarea name="keterangan" class="form-input" rows="2" placeholder="Opsional..."></textarea>
+                            <label class="form-label text-sm">Keterangan <span class="text-gray-400 font-normal">(opsional)</span></label>
+                            <textarea name="keterangan" class="form-input" rows="2" placeholder="Catatan tambahan..."></textarea>
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t">
+                    <!-- Footer -->
+                    <div class="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-2xl">
                         <button type="button" @click="showModal = false" class="btn btn-secondary">Batal</button>
-                        <button type="submit" class="btn btn-primary">Simpan</button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Simpan Transaksi
+                        </button>
                     </div>
                 </form>
             </div>
@@ -302,42 +379,75 @@ function transaksiPage() {
         currentPage: 1,
         perPage: 10,
         data: @json($transaksiJson),
+        availableItems: @json($itemsJson),
         
         // Form state
-        harga: {{ $hargaDimsum ?? 0 }},
-        dimsum: 0,
         modal: 0,
         cash: 0,
         isTutup: false,
         statusValue: 'buka',
+        formItems: [],
         
         init() {
-            this.$watch('dimsum', (value) => {
-                if (!this.isTutup) {
-                    this.modal = value * this.harga;
-                }
-            });
-            // Auto open modal if there are errors
             @if($errors->any())
             this.showModal = true;
             @endif
+            
+            // Watch totalItemsSubtotal to auto-fill modal
+            this.$watch('totalItemsSubtotal', (val) => {
+                if (!this.isTutup) {
+                    this.modal = val;
+                }
+            });
+        },
+        
+        openCreateModal() {
+            this.formItems = [];
+            this.modal = 0;
+            this.cash = 0;
+            this.isTutup = false;
+            this.statusValue = 'buka';
+            this.showModal = true;
         },
         
         toggleStatus() {
             this.isTutup = !this.isTutup;
             this.statusValue = this.isTutup ? 'tutup' : 'buka';
             if (this.isTutup) {
-                this.dimsum = 0;
+                this.formItems = [];
                 this.modal = 0;
                 this.cash = 0;
             }
         },
         
+        addItem() {
+            this.formItems.push({ item_id: '', qty: 1, harga: 0, satuan: '' });
+        },
+        
+        removeItem(idx) {
+            this.formItems.splice(idx, 1);
+        },
+        
+        onItemSelect(idx) {
+            const selected = this.availableItems.find(i => i.id == this.formItems[idx].item_id);
+            if (selected) {
+                this.formItems[idx].harga = selected.harga;
+                this.formItems[idx].satuan = selected.satuan;
+            }
+        },
+        
+        getItemStok(itemId) {
+            const item = this.availableItems.find(i => i.id == itemId);
+            return item ? item.stok : null;
+        },
+        
+        get totalItemsSubtotal() {
+            return this.formItems.reduce((sum, fi) => sum + (fi.qty * fi.harga), 0);
+        },
+        
         get omset() {
             return this.cash - this.modal;
         },
-        
-
         
         formatRupiah(value) {
             return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
@@ -386,7 +496,7 @@ function transaksiPage() {
         deleteItem(id) {
             Swal.fire({
                 title: 'Hapus Transaksi?',
-                text: 'Data yang dihapus tidak bisa dikembalikan!',
+                text: 'Data yang dihapus tidak bisa dikembalikan! Stok akan dikembalikan.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',

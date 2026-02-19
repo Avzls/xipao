@@ -34,10 +34,10 @@
         <div class="stat-card">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <span class="text-2xl">🥟</span>
+                    <span class="text-2xl">📦</span>
                 </div>
                 <div>
-                    <p class="stat-label">Dimsum Terjual</p>
+                    <p class="stat-label">Produk Terjual</p>
                     <p class="stat-value text-blue-600">{{ number_format($totalDimsumHariIni, 0, ',', '.') }} pcs</p>
                 </div>
             </div>
@@ -65,7 +65,7 @@
                 <thead>
                     <tr>
                         <th>Warung</th>
-                        <th>Dimsum</th>
+                        <th>Produk</th>
                         <th>Cash</th>
                         <th>Modal</th>
                         <th>Omset</th>
@@ -79,7 +79,7 @@
                         @endphp
                         <tr>
                             <td class="font-medium">{{ $warung->nama_warung }}</td>
-                            <td>{{ $tx ? number_format($tx->dimsum_terjual, 0, ',', '.') : '-' }}</td>
+                            <td>{{ $tx ? $tx->transaksiItems->sum('qty') . ' pcs' : '-' }}</td>
                             <td>{{ $tx ? 'Rp ' . number_format($tx->cash, 0, ',', '.') : '-' }}</td>
                             <td>{{ $tx ? 'Rp ' . number_format($tx->modal, 0, ',', '.') : '-' }}</td>
                             <td class="font-semibold text-emerald-600">{{ $tx ? 'Rp ' . number_format($tx->omset, 0, ',', '.') : '-' }}</td>
@@ -96,7 +96,7 @@
                 <tfoot>
                     <tr class="bg-secondary-100 font-semibold">
                         <td>TOTAL</td>
-                        <td>{{ number_format($hariIni->sum('dimsum_terjual'), 0, ',', '.') }}</td>
+                        <td>{{ number_format($totalDimsumHariIni, 0, ',', '.') }} pcs</td>
                         <td>Rp {{ number_format($hariIni->sum('cash'), 0, ',', '.') }}</td>
                         <td>Rp {{ number_format($hariIni->sum('modal'), 0, ',', '.') }}</td>
                         <td class="text-emerald-600">Rp {{ number_format($hariIni->sum('omset'), 0, ',', '.') }}</td>

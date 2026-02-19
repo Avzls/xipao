@@ -32,6 +32,11 @@ class TransaksiHarian extends Model
         return $this->belongsTo(Warung::class);
     }
 
+    public function transaksiItems(): HasMany
+    {
+        return $this->hasMany(TransaksiItem::class);
+    }
+
     public function pengeluaranOperasionals(): HasMany
     {
         return $this->warung->pengeluaranOperasionals()

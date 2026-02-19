@@ -80,7 +80,7 @@
                 <th>No</th>
                 <th>Warung</th>
                 <th class="text-center">Hari</th>
-                <th class="text-center">Dimsum</th>
+                <th class="text-center">Produk</th>
                 <th class="text-right">Omset</th>
                 <th class="text-right">Operasional</th>
                 <th class="text-right">Profit</th>
@@ -100,11 +100,15 @@
                             -
                         @endif
                     </td>
-                    <td class="text-center">
+                    <td style="text-align: left; font-size: 10px;">
                         @if($row['is_tutup'] ?? false)
                             <span style="color: #dc2626;">-</span>
                         @else
-                            {{ number_format($row['dimsum'], 0, ',', '.') }}
+                            @forelse($row['produk_detail'] as $nama => $qty)
+                                {{ $nama }}: {{ $qty }}<br>
+                            @empty
+                                -
+                            @endforelse
                         @endif
                     </td>
                     <td class="text-right">
@@ -120,7 +124,7 @@
             @endforeach
             <tr class="total-row">
                 <td colspan="3">TOTAL</td>
-                <td class="text-center">{{ number_format($totals['dimsum'], 0, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($totals['produk_qty'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($totals['omset'], 0, ',', '.') }}</td>
                 <td class="text-right negative">Rp {{ number_format($totals['operasional'], 0, ',', '.') }}</td>
                 <td class="text-right {{ $totals['net_profit'] >= 0 ? 'positive' : 'negative' }}">Rp {{ number_format($totals['net_profit'], 0, ',', '.') }}</td>

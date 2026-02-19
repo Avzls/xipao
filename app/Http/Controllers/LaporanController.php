@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Warung;
 use App\Models\TransaksiHarian;
+use App\Models\TransaksiItem;
 use App\Models\PengeluaranOperasional;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -25,7 +26,7 @@ class LaporanController extends Controller
         $warungId = $request->input('warung_id');
         
         // Build query - ambil langsung dari database transaksi
-        $query = TransaksiHarian::with('warung')
+        $query = TransaksiHarian::with(['warung', 'transaksiItems.item'])
             ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
         
         if ($warungId) {
@@ -52,12 +53,19 @@ class LaporanController extends Controller
             // Flag tutup: semua transaksi dalam periode adalah tutup
             $isTutup = ($hariBuka == 0 && $hariTutup > 0);
             
+            // Group items by product name
+            $allItems = $transactions->where('status', 'buka')->flatMap->transaksiItems;
+            $produkDetail = $allItems->groupBy(fn($ti) => $ti->item->nama_item ?? 'Unknown')
+                ->map(fn($group) => $group->sum('qty'))
+                ->sortDesc();
+            
             return [
                 'warung' => $warung,
                 'omset' => $omset,
                 'operasional' => $operasional,
                 'net_profit' => $profit,
-                'dimsum' => $transactions->where('status', 'buka')->sum('dimsum_terjual'),
+                'produk_qty' => $allItems->sum('qty'),
+                'produk_detail' => $produkDetail,
                 'hari_kerja' => $hariBuka,
                 'hari_tutup' => $hariTutup,
                 'is_tutup' => $isTutup,
@@ -68,7 +76,7 @@ class LaporanController extends Controller
             'omset' => $data->sum('omset'),
             'operasional' => $data->sum('operasional'),
             'net_profit' => $data->sum('net_profit'),
-            'dimsum' => $data->sum('dimsum'),
+            'produk_qty' => $data->sum('produk_qty'),
         ];
         
         return view('laporan.konsolidasi', compact('data', 'totals', 'tanggalAwal', 'tanggalAkhir', 'allWarungs', 'warungId'));
@@ -92,7 +100,7 @@ class LaporanController extends Controller
         $warungId = $request->input('warung_id');
         
         // Build query - ambil langsung dari database transaksi
-        $query = TransaksiHarian::with('warung')
+        $query = TransaksiHarian::with(['warung', 'transaksiItems.item'])
             ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
         
         if ($warungId) {
@@ -117,12 +125,18 @@ class LaporanController extends Controller
             
             $isTutup = ($hariBuka == 0 && $hariTutup > 0);
             
+            $allItems = $transactions->where('status', 'buka')->flatMap->transaksiItems;
+            $produkDetail = $allItems->groupBy(fn($ti) => $ti->item->nama_item ?? 'Unknown')
+                ->map(fn($group) => $group->sum('qty'))
+                ->sortDesc();
+            
             return [
                 'warung' => $warung->nama_warung,
                 'omset' => $omset,
                 'operasional' => $operasional,
                 'net_profit' => $profit,
-                'dimsum' => $transactions->where('status', 'buka')->sum('dimsum_terjual'),
+                'produk_qty' => $allItems->sum('qty'),
+                'produk_detail' => $produkDetail,
                 'hari_kerja' => $hariBuka,
                 'hari_tutup' => $hariTutup,
                 'is_tutup' => $isTutup,
@@ -133,7 +147,7 @@ class LaporanController extends Controller
             'omset' => $data->sum('omset'),
             'operasional' => $data->sum('operasional'),
             'net_profit' => $data->sum('net_profit'),
-            'dimsum' => $data->sum('dimsum'),
+            'produk_qty' => $data->sum('produk_qty'),
         ];
         
         $periodeLabel = Carbon::parse($tanggalAwal)->translatedFormat('d M Y') . ' - ' . Carbon::parse($tanggalAkhir)->translatedFormat('d M Y');

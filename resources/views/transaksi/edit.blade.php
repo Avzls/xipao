@@ -9,68 +9,56 @@
         <form action="{{ route('transaksi.update', $transaksi) }}" method="POST">
             @csrf
             @method('PUT')
-            
             @if($errors->any())
-                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-                    @foreach($errors->all() as $error)
-                        <p class="text-sm">{{ $error }}</p>
-                    @endforeach
-                </div>
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                @foreach($errors->all() as $error)<p class="text-sm">{{ $error }}</p>@endforeach
+            </div>
             @endif
 
-            <div class="mb-4 p-3 bg-secondary-100 rounded-lg">
-                <p class="text-sm text-text-secondary">
-                    <strong>Warung:</strong> {{ $transaksi->warung->nama_warung }} | 
-                    <strong>Tanggal:</strong> {{ $transaksi->tanggal->translatedFormat('d F Y') }}
-                </p>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-5">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">📋 Info Transaksi</p>
+                <div class="flex items-center gap-4 text-sm">
+                    <span><strong>Warung:</strong> {{ $transaksi->warung->nama_warung }}</span>
+                    <span><strong>Tanggal:</strong> {{ $transaksi->tanggal->translatedFormat('d F Y') }}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ ($transaksi->status ?? 'buka') === 'tutup' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700' }}">
+                        {{ strtoupper($transaksi->status ?? 'buka') }}
+                    </span>
+                </div>
             </div>
 
             <div class="space-y-5">
-                <!-- Penjualan Dimsum -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 class="font-semibold text-blue-800 mb-3">🥟 Penjualan Dimsum</h3>
-                    <div>
-                        <label for="dimsum_terjual" class="form-label">Dimsum Terjual (pcs) <span class="text-red-500">*</span></label>
-                        <input type="number" name="dimsum_terjual" id="dimsum_terjual" class="form-input" x-model.number="dimsum" min="0" required>
-                        <p class="text-xs text-amber-600 mt-1">⚠️ Ubah ini akan adjust stok</p>
+                @include('transaksi._items_section')
+
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">💰 Keuangan</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label text-sm">Modal (Rp)</label>
+                            <input type="number" name="modal" class="form-input bg-white" x-model.number="modal" min="0" required>
+                            <p class="text-[11px] text-gray-400 mt-1" x-show="totalItemsSubtotal > 0">= Total Penjualan (otomatis)</p>
+                        </div>
+                        <div>
+                            <label class="form-label text-sm">Cash Masuk (Rp)</label>
+                            <input type="number" name="cash" class="form-input bg-white" x-model.number="cash" min="0" required>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 rounded-lg bg-gradient-to-r" :class="omset >= 0 ? 'from-emerald-100 to-emerald-50 border border-emerald-200' : 'from-red-100 to-red-50 border border-red-200'">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-semibold" :class="omset >= 0 ? 'text-emerald-700' : 'text-red-700'">Omset (Cash − Modal):</span>
+                            <span class="text-xl font-bold" :class="omset >= 0 ? 'text-emerald-600' : 'text-red-600'" x-text="formatRupiah(omset)"></span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Modal & Cash -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="modal" class="form-label">Modal (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" name="modal" id="modal" class="form-input" x-model.number="modal" min="0" required>
-                    </div>
-                    <div>
-                        <label for="cash" class="form-label">Cash Masuk (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" name="cash" id="cash" class="form-input" x-model.number="cash" min="0" required>
-                    </div>
-                </div>
-
-                <!-- Omset Summary -->
-                <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
-                    <div class="flex items-center justify-between">
-                        <span class="font-semibold text-emerald-800">💰 Omset (Cash - Modal):</span>
-                        <span class="text-2xl font-bold" :class="omset >= 0 ? 'text-emerald-600' : 'text-red-600'" x-text="formatRupiah(omset)"></span>
-                    </div>
-                </div>
-
-                <!-- Keterangan -->
                 <div>
-                    <label for="keterangan" class="form-label">Keterangan (Opsional)</label>
-                    <textarea name="keterangan" id="keterangan" rows="2" class="form-input">{{ old('keterangan', $transaksi->keterangan) }}</textarea>
+                    <label class="form-label text-sm">Keterangan <span class="text-gray-400 font-normal">(opsional)</span></label>
+                    <textarea name="keterangan" rows="2" class="form-input">{{ old('keterangan', $transaksi->keterangan) }}</textarea>
                 </div>
             </div>
 
             <div class="flex items-center gap-3 mt-6 pt-6 border-t border-secondary-300">
                 <a href="{{ route('transaksi.index') }}" class="btn btn-secondary">Batal</a>
-                <button type="submit" class="btn btn-primary">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Update Transaksi
-                </button>
+                <button type="submit" class="btn btn-primary">Update Transaksi</button>
             </div>
         </form>
     </div>
@@ -79,24 +67,22 @@
 <script>
 function transaksiForm() {
     return {
-        harga: {{ $hargaDimsum ?? 0 }},
-        dimsum: {{ old('dimsum_terjual', $transaksi->dimsum_terjual) }},
+        availableItems: @json($itemsJson),
         modal: {{ old('modal', $transaksi->modal) }},
         cash: {{ old('cash', $transaksi->cash) }},
-        
+        isTutup: {{ ($transaksi->status ?? 'buka') === 'tutup' ? 'true' : 'false' }},
+        formItems: @json($existingItemsJson).map(i => ({ item_id: String(i.item_id), qty: i.qty, harga: i.harga, satuan: i.satuan })),
         init() {
-            this.$watch('dimsum', (value) => {
-                this.modal = value * this.harga;
-            });
+            this.$watch('totalItemsSubtotal', (val) => { this.modal = val; });
         },
-        
-        get omset() {
-            return this.cash - this.modal;
-        },
-        
-        formatRupiah(value) {
-            return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
-        }
+        addItem() { this.formItems.push({ item_id: '', qty: 1, harga: 0, satuan: '' }); },
+        removeItem(idx) { this.formItems.splice(idx, 1); },
+        onItemSelect(idx) { const s = this.availableItems.find(i => i.id == this.formItems[idx].item_id); if (s) { this.formItems[idx].harga = s.harga; this.formItems[idx].satuan = s.satuan; } },
+        getItemStok(id) { const i = this.availableItems.find(x => x.id == id); return i ? i.stok : null; },
+        get totalItemsSubtotal() { return this.formItems.reduce((s, fi) => s + (fi.qty * fi.harga), 0); },
+        get omset() { return this.cash - this.modal; },
+        formatRupiah(v) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(v); },
+        formatNumber(n) { return new Intl.NumberFormat('id-ID').format(n); }
     }
 }
 </script>

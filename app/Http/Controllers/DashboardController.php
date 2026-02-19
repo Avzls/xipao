@@ -6,6 +6,7 @@ use App\Models\Warung;
 use App\Models\StokGudang;
 use App\Models\TransaksiHarian;
 use App\Models\PengeluaranOperasional;
+use App\Models\TransaksiItem;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -17,9 +18,11 @@ class DashboardController extends Controller
         $warungs = Warung::aktif()->get();
         
         // Today's summary - Transaksi
-        $hariIni = TransaksiHarian::hariIni()->get();
+        $hariIni = TransaksiHarian::with('transaksiItems')->hariIni()->get();
         $totalOmsetHariIni = $hariIni->sum('omset');
-        $totalDimsumHariIni = $hariIni->sum('dimsum_terjual');
+        $totalDimsumHariIni = TransaksiItem::whereHas('transaksiHarian', function($q) {
+            $q->whereDate('tanggal', Carbon::today());
+        })->sum('qty');
         
         // Today's summary - Operasional
         $operasionalHariIni = PengeluaranOperasional::whereDate('tanggal', Carbon::today())->sum('nominal');

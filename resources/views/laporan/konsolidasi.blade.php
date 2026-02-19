@@ -68,8 +68,8 @@
             <p class="stat-value text-lg {{ $totals['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">Rp {{ number_format($totals['net_profit'], 0, ',', '.') }}</p>
         </div>
         <div class="stat-card">
-            <p class="stat-label">Total Dimsum</p>
-            <p class="stat-value text-lg text-purple-600">{{ number_format($totals['dimsum'], 0, ',', '.') }} pcs</p>
+            <p class="stat-label">Total Produk</p>
+            <p class="stat-value text-lg text-purple-600">{{ number_format($totals['produk_qty'], 0, ',', '.') }} pcs</p>
         </div>
     </div>
 
@@ -82,7 +82,7 @@
                     <tr>
                         <th>Warung</th>
                         <th>Hari</th>
-                        <th>Dimsum</th>
+                        <th>Produk</th>
                         <th>Omset</th>
                         <th>Operasional</th>
                         <th>Profit</th>
@@ -105,7 +105,16 @@
                                 @if($row['is_tutup'])
                                     <span class="text-red-500">-</span>
                                 @else
-                                    {{ number_format($row['dimsum'], 0, ',', '.') }}
+                                    <div class="text-sm space-y-0.5">
+                                        @forelse($row['produk_detail'] as $nama => $qty)
+                                            <div class="flex justify-between gap-2">
+                                                <span class="text-gray-700">{{ $nama }}</span>
+                                                <span class="font-semibold text-gray-900">{{ $qty }}</span>
+                                            </div>
+                                        @empty
+                                            <span class="text-gray-400">-</span>
+                                        @endforelse
+                                    </div>
                                 @endif
                             </td>
                             <td>
@@ -124,7 +133,7 @@
                     <tr class="bg-secondary-100 font-semibold">
                         <td>TOTAL</td>
                         <td>-</td>
-                        <td>{{ number_format($totals['dimsum'], 0, ',', '.') }}</td>
+                        <td>{{ number_format($totals['produk_qty'], 0, ',', '.') }}</td>
                         <td>Rp {{ number_format($totals['omset'], 0, ',', '.') }}</td>
                         <td class="text-red-600">Rp {{ number_format($totals['operasional'], 0, ',', '.') }}</td>
                         <td class="{{ $totals['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">Rp {{ number_format($totals['net_profit'], 0, ',', '.') }}</td>
