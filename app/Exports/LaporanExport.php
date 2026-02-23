@@ -33,64 +33,33 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
 
     public function collection()
     {
-        $allWarungs = Warung::aktif()->get();
+        $query = TransaksiHarian::with(['warung', 'transaksiItems.item'])
+            ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
         
-        // Filter by warung if specified
         if ($this->warungId) {
-            $warungs = $allWarungs->where('id', $this->warungId);
-        } else {
-            $warungs = $allWarungs;
+            $query->where('warung_id', $this->warungId);
         }
         
-        $data = $warungs->map(function ($warung) {
-            $transaksi = TransaksiHarian::with('transaksiItems.item')->where('warung_id', $warung->id)
-                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
-            
-            $operasional = PengeluaranOperasional::where('warung_id', $warung->id)
-                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
-                ->sum('nominal');
-            
-            // Hitung transaksi buka dan tutup
-            $hariBuka = (clone $transaksi)->where('status', 'buka')->count();
-            $hariTutup = (clone $transaksi)->where('status', 'tutup')->count();
-            $hariKerja = $hariBuka;
-            
-            $omset = $transaksi->sum('omset');
-            $profit = $omset - $operasional;
-            
-            // Build product detail string
-            $allItems = $transaksi->get()->flatMap->transaksiItems;
-            $produkDetail = $allItems->groupBy(fn($ti) => $ti->item->nama_item ?? 'Unknown')
-                ->map(fn($group) => $group->sum('qty'))
-                ->sortDesc();
-            $produkText = $produkDetail->map(fn($qty, $nama) => "{$nama}: {$qty}")->implode(', ');
-            
-            $totalTransaksi = $hariBuka + $hariTutup;
-            $isTutup = ($totalTransaksi > 0 && $hariBuka == 0);
-            
-            return [
-                'warung' => $warung->nama_warung,
-                'produk' => $isTutup ? 'TUTUP' : ($produkText ?: '-'),
-                'omset' => $isTutup ? 0 : $omset,
-                'operasional' => $operasional,
-                'profit' => $profit,
-                'hari_kerja' => $isTutup ? 'TUTUP (' . $hariTutup . ' hari)' : ($hariTutup > 0 ? $hariKerja . ' (+' . $hariTutup . ' tutup)' : $hariKerja),
-            ];
-        });
-
-        // Add totals row
-        $totalOmset = $data->sum('omset');
-        $totalOperasional = $data->sum('operasional');
-        $totalProfit = $data->sum('profit');
-        $totalProduk = $data->sum('produk');
+        $transaksis = $query->get();
+        $allItems = $transaksis->where('status', 'buka')->flatMap->transaksiItems;
         
+        // Per-product rows
+        $data = $allItems->groupBy('item_id')->map(function ($items) {
+            $first = $items->first();
+            return [
+                'produk' => $first->item->nama_item ?? 'Unknown',
+                'harga' => $first->harga,
+                'qty' => $items->sum('qty'),
+                'omset' => $items->sum('subtotal'),
+            ];
+        })->sortByDesc('omset')->values();
+
+        // Totals row
         $data->push([
-            'warung' => 'TOTAL',
-            'produk' => $totalProduk,
-            'omset' => $totalOmset,
-            'operasional' => $totalOperasional,
-            'profit' => $totalProfit,
-            'hari_kerja' => '',
+            'produk' => 'TOTAL',
+            'harga' => '',
+            'qty' => $data->sum('qty'),
+            'omset' => $data->sum('omset'),
         ]);
 
         return $data;
@@ -99,21 +68,18 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
     public function headings(): array
     {
         return [
-            'Warung',
-            'Produk Terjual',
+            'Produk',
+            'Harga Satuan',
+            'Qty Terjual',
             'Omset (Rp)',
-            'Operasional (Rp)',
-            'Profit (Rp)',
-            'Hari Kerja',
         ];
     }
 
     public function columnFormats(): array
     {
         return [
-            'C' => '#,##0',
+            'B' => '#,##0',
             'D' => '#,##0',
-            'E' => '#,##0',
         ];
     }
 

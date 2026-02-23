@@ -14,18 +14,11 @@ use Carbon\Carbon;
 
 class LaporanController extends Controller
 {
-    public function konsolidasi(Request $request)
+    /**
+     * Build laporan data: per-product and per-warung breakdown
+     */
+    private function buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId = null)
     {
-        $allWarungs = Warung::aktif()->orderBy('nama_warung')->get();
-        
-        // Date range filter
-        $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
-        
-        // Warung filter
-        $warungId = $request->input('warung_id');
-        
-        // Build query - ambil langsung dari database transaksi
         $query = TransaksiHarian::with(['warung', 'transaksiItems.item'])
             ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
         
@@ -33,53 +26,73 @@ class LaporanController extends Controller
             $query->where('warung_id', $warungId);
         }
         
-        // Get all transactions and group by warung
-        $transaksis = $query->get()->groupBy('warung_id');
+        $transaksis = $query->get();
         
-        $data = $transaksis->map(function ($transactions, $warungId) use ($tanggalAwal, $tanggalAkhir) {
+        // === Per-Product Breakdown ===
+        $allItems = $transaksis->where('status', 'buka')->flatMap->transaksiItems;
+        
+        $produkData = $allItems->groupBy('item_id')->map(function ($items) {
+            $first = $items->first();
+            return [
+                'nama' => $first->item->nama_item ?? 'Unknown',
+                'qty' => $items->sum('qty'),
+                'omset' => $items->sum('subtotal'),
+                'harga' => $first->harga,
+            ];
+        })->sortByDesc('omset')->values();
+        
+        $produkTotals = [
+            'qty' => $produkData->sum('qty'),
+            'omset' => $produkData->sum('omset'),
+        ];
+
+        // === Per-Warung Summary (for operasional & profit) ===
+        $warungGroups = $transaksis->groupBy('warung_id');
+        
+        $warungData = $warungGroups->map(function ($transactions, $wId) use ($tanggalAwal, $tanggalAkhir) {
             $warung = $transactions->first()->warung;
             
-            $operasional = PengeluaranOperasional::where('warung_id', $warungId)
+            $operasional = PengeluaranOperasional::where('warung_id', $wId)
                 ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
                 ->sum('nominal');
             
-            // Hitung transaksi buka dan tutup
             $hariBuka = $transactions->where('status', 'buka')->count();
             $hariTutup = $transactions->where('status', 'tutup')->count();
-            
             $omset = $transactions->sum('omset');
             $profit = $omset - $operasional;
-            
-            // Flag tutup: semua transaksi dalam periode adalah tutup
             $isTutup = ($hariBuka == 0 && $hariTutup > 0);
-            
-            // Group items by product name
-            $allItems = $transactions->where('status', 'buka')->flatMap->transaksiItems;
-            $produkDetail = $allItems->groupBy(fn($ti) => $ti->item->nama_item ?? 'Unknown')
-                ->map(fn($group) => $group->sum('qty'))
-                ->sortDesc();
             
             return [
                 'warung' => $warung,
                 'omset' => $omset,
                 'operasional' => $operasional,
                 'net_profit' => $profit,
-                'produk_qty' => $allItems->sum('qty'),
-                'produk_detail' => $produkDetail,
                 'hari_kerja' => $hariBuka,
                 'hari_tutup' => $hariTutup,
                 'is_tutup' => $isTutup,
             ];
         })->sortBy(fn($item) => $item['warung']->nama_warung)->values();
         
-        $totals = [
-            'omset' => $data->sum('omset'),
-            'operasional' => $data->sum('operasional'),
-            'net_profit' => $data->sum('net_profit'),
-            'produk_qty' => $data->sum('produk_qty'),
+        $warungTotals = [
+            'omset' => $warungData->sum('omset'),
+            'operasional' => $warungData->sum('operasional'),
+            'net_profit' => $warungData->sum('net_profit'),
         ];
+
+        return compact('produkData', 'produkTotals', 'warungData', 'warungTotals');
+    }
+
+    public function konsolidasi(Request $request)
+    {
+        $allWarungs = Warung::aktif()->orderBy('nama_warung')->get();
         
-        return view('laporan.konsolidasi', compact('data', 'totals', 'tanggalAwal', 'tanggalAkhir', 'allWarungs', 'warungId'));
+        $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
+        $warungId = $request->input('warung_id');
+        
+        $data = $this->buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId);
+        
+        return view('laporan.konsolidasi', array_merge($data, compact('tanggalAwal', 'tanggalAkhir', 'allWarungs', 'warungId')));
     }
 
     public function exportExcel(Request $request)
@@ -99,60 +112,11 @@ class LaporanController extends Controller
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
         $warungId = $request->input('warung_id');
         
-        // Build query - ambil langsung dari database transaksi
-        $query = TransaksiHarian::with(['warung', 'transaksiItems.item'])
-            ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
-        
-        if ($warungId) {
-            $query->where('warung_id', $warungId);
-        }
-        
-        // Get all transactions and group by warung
-        $transaksis = $query->get()->groupBy('warung_id');
-        
-        $data = $transaksis->map(function ($transactions, $warungId) use ($tanggalAwal, $tanggalAkhir) {
-            $warung = $transactions->first()->warung;
-            
-            $operasional = PengeluaranOperasional::where('warung_id', $warungId)
-                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
-                ->sum('nominal');
-            
-            $hariBuka = $transactions->where('status', 'buka')->count();
-            $hariTutup = $transactions->where('status', 'tutup')->count();
-            
-            $omset = $transactions->sum('omset');
-            $profit = $omset - $operasional;
-            
-            $isTutup = ($hariBuka == 0 && $hariTutup > 0);
-            
-            $allItems = $transactions->where('status', 'buka')->flatMap->transaksiItems;
-            $produkDetail = $allItems->groupBy(fn($ti) => $ti->item->nama_item ?? 'Unknown')
-                ->map(fn($group) => $group->sum('qty'))
-                ->sortDesc();
-            
-            return [
-                'warung' => $warung->nama_warung,
-                'omset' => $omset,
-                'operasional' => $operasional,
-                'net_profit' => $profit,
-                'produk_qty' => $allItems->sum('qty'),
-                'produk_detail' => $produkDetail,
-                'hari_kerja' => $hariBuka,
-                'hari_tutup' => $hariTutup,
-                'is_tutup' => $isTutup,
-            ];
-        })->sortBy('warung')->values();
-        
-        $totals = [
-            'omset' => $data->sum('omset'),
-            'operasional' => $data->sum('operasional'),
-            'net_profit' => $data->sum('net_profit'),
-            'produk_qty' => $data->sum('produk_qty'),
-        ];
+        $data = $this->buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId);
         
         $periodeLabel = Carbon::parse($tanggalAwal)->translatedFormat('d M Y') . ' - ' . Carbon::parse($tanggalAkhir)->translatedFormat('d M Y');
         
-        $pdf = Pdf::loadView('laporan.pdf', compact('data', 'totals', 'tanggalAwal', 'tanggalAkhir', 'periodeLabel'));
+        $pdf = Pdf::loadView('laporan.pdf', array_merge($data, compact('tanggalAwal', 'tanggalAkhir', 'periodeLabel')));
         
         return $pdf->download("laporan_{$tanggalAwal}_{$tanggalAkhir}.pdf");
     }

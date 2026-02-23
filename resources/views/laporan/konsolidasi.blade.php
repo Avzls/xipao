@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('page-title', 'Laporan')
-@section('page-subtitle', 'Ringkasan performa semua warung')
+@section('page-subtitle', 'Ringkasan performa per produk & per warung')
 
 @section('header-actions')
     <a href="{{ route('laporan.export.excel', ['tanggal_awal' => $tanggalAwal, 'tanggal_akhir' => $tanggalAkhir, 'warung_id' => $warungId]) }}" class="btn btn-success">
@@ -56,40 +56,79 @@
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="stat-card">
-            <p class="stat-label">Total Omset</p>
-            <p class="stat-value text-lg text-emerald-600">Rp {{ number_format($totals['omset'], 0, ',', '.') }}</p>
+            <p class="stat-label">Total Produk Terjual</p>
+            <p class="stat-value text-lg text-purple-600">{{ number_format($produkTotals['qty'], 0, ',', '.') }} pcs</p>
         </div>
         <div class="stat-card">
-            <p class="stat-label">Biaya Operasional</p>
-            <p class="stat-value text-lg text-red-600">Rp {{ number_format($totals['operasional'], 0, ',', '.') }}</p>
+            <p class="stat-label">Omset Produk</p>
+            <p class="stat-value text-lg text-blue-600">Rp {{ number_format($produkTotals['omset'], 0, ',', '.') }}</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label">Total Operasional</p>
+            <p class="stat-value text-lg text-red-600">Rp {{ number_format($warungTotals['operasional'], 0, ',', '.') }}</p>
         </div>
         <div class="stat-card">
             <p class="stat-label">Profit Bersih</p>
-            <p class="stat-value text-lg {{ $totals['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">Rp {{ number_format($totals['net_profit'], 0, ',', '.') }}</p>
-        </div>
-        <div class="stat-card">
-            <p class="stat-label">Total Produk</p>
-            <p class="stat-value text-lg text-purple-600">{{ number_format($totals['produk_qty'], 0, ',', '.') }} pcs</p>
+            <p class="stat-value text-lg {{ $warungTotals['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">Rp {{ number_format($warungTotals['net_profit'], 0, ',', '.') }}</p>
         </div>
     </div>
 
-    <!-- Table -->
+    <!-- Per-Product Table -->
     <div class="card">
-        <h3 class="card-header">📊 Detail per Warung</h3>
+        <h3 class="card-header">📦 Penjualan per Produk</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Produk</th>
+                        <th>Harga Satuan</th>
+                        <th>Qty Terjual</th>
+                        <th>Omset</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($produkData as $index => $produk)
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td class="font-medium">{{ $produk['nama'] }}</td>
+                            <td>Rp {{ number_format($produk['harga'], 0, ',', '.') }}</td>
+                            <td>{{ number_format($produk['qty'], 0, ',', '.') }}</td>
+                            <td class="font-semibold text-emerald-600">Rp {{ number_format($produk['omset'], 0, ',', '.') }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="text-center text-gray-400 py-4">Tidak ada data produk</td></tr>
+                    @endforelse
+                </tbody>
+                @if($produkData->count() > 0)
+                <tfoot>
+                    <tr class="bg-secondary-100 font-semibold">
+                        <td colspan="3">TOTAL</td>
+                        <td>{{ number_format($produkTotals['qty'], 0, ',', '.') }}</td>
+                        <td class="text-emerald-600">Rp {{ number_format($produkTotals['omset'], 0, ',', '.') }}</td>
+                    </tr>
+                </tfoot>
+                @endif
+            </table>
+        </div>
+    </div>
+
+    <!-- Per-Warung Summary -->
+    <div class="card">
+        <h3 class="card-header">🏪 Ringkasan per Warung</h3>
         <div class="table-container">
             <table class="table">
                 <thead>
                     <tr>
                         <th>Warung</th>
                         <th>Hari</th>
-                        <th>Produk</th>
                         <th>Omset</th>
                         <th>Operasional</th>
                         <th>Profit</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($data as $row)
+                    @foreach($warungData as $row)
                         <tr class="{{ $row['is_tutup'] ? 'bg-red-50' : '' }}">
                             <td class="font-medium">{{ $row['warung']->nama_warung }}</td>
                             <td>
@@ -99,22 +138,6 @@
                                     {{ $row['hari_kerja'] }} <span class="text-red-500 text-sm">(+{{ $row['hari_tutup'] }} tutup)</span>
                                 @else
                                     {{ $row['hari_kerja'] }}
-                                @endif
-                            </td>
-                            <td>
-                                @if($row['is_tutup'])
-                                    <span class="text-red-500">-</span>
-                                @else
-                                    <div class="text-sm space-y-0.5">
-                                        @forelse($row['produk_detail'] as $nama => $qty)
-                                            <div class="flex justify-between gap-2">
-                                                <span class="text-gray-700">{{ $nama }}</span>
-                                                <span class="font-semibold text-gray-900">{{ $qty }}</span>
-                                            </div>
-                                        @empty
-                                            <span class="text-gray-400">-</span>
-                                        @endforelse
-                                    </div>
                                 @endif
                             </td>
                             <td>
@@ -133,10 +156,9 @@
                     <tr class="bg-secondary-100 font-semibold">
                         <td>TOTAL</td>
                         <td>-</td>
-                        <td>{{ number_format($totals['produk_qty'], 0, ',', '.') }}</td>
-                        <td>Rp {{ number_format($totals['omset'], 0, ',', '.') }}</td>
-                        <td class="text-red-600">Rp {{ number_format($totals['operasional'], 0, ',', '.') }}</td>
-                        <td class="{{ $totals['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">Rp {{ number_format($totals['net_profit'], 0, ',', '.') }}</td>
+                        <td>Rp {{ number_format($warungTotals['omset'], 0, ',', '.') }}</td>
+                        <td class="text-red-600">Rp {{ number_format($warungTotals['operasional'], 0, ',', '.') }}</td>
+                        <td class="{{ $warungTotals['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">Rp {{ number_format($warungTotals['net_profit'], 0, ',', '.') }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -145,38 +167,31 @@
 
     <!-- Chart -->
     <div class="card">
-        <h3 class="card-header">📈 Perbandingan per Warung</h3>
-        <canvas id="barChart" height="100"></canvas>
+        <h3 class="card-header">📈 Omset per Produk</h3>
+        <canvas id="produkChart" height="100"></canvas>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('barChart').getContext('2d');
-        const data = @json($data);
+        const ctx = document.getElementById('produkChart').getContext('2d');
+        const produkData = @json($produkData);
+        
+        const colors = [
+            '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+        ];
         
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: data.map(d => d.warung.nama_warung),
+                labels: produkData.map(d => d.nama),
                 datasets: [
                     {
-                        label: 'Omset',
-                        data: data.map(d => d.omset),
-                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                        borderRadius: 4,
-                    },
-                    {
-                        label: 'Operasional',
-                        data: data.map(d => d.operasional),
-                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                        borderRadius: 4,
-                    },
-                    {
-                        label: 'Profit',
-                        data: data.map(d => d.net_profit),
-                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        label: 'Qty Terjual',
+                        data: produkData.map(d => d.qty),
+                        backgroundColor: colors.slice(0, produkData.length).map(c => c + 'cc'),
                         borderRadius: 4,
                     }
                 ]
@@ -184,20 +199,13 @@
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { position: 'top' },
+                    legend: { display: false },
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
-                                if (value >= 1000000) {
-                                    return 'Rp ' + (value / 1000000).toFixed(0) + 'jt';
-                                } else if (value >= 1000) {
-                                    return 'Rp ' + (value / 1000).toFixed(0) + 'rb';
-                                }
-                                return 'Rp ' + value;
-                            }
+                            stepSize: 1
                         }
                     }
                 }
