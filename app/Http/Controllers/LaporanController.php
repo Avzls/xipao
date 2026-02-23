@@ -55,7 +55,7 @@ class LaporanController extends Controller
         // === Per-Warung Summary (for operasional & profit) ===
         $warungGroups = $transaksis->groupBy('warung_id');
         
-        $warungData = $warungGroups->map(function ($transactions, $wId) use ($tanggalAwal, $tanggalAkhir, $itemId) {
+        $warungData = $warungGroups->map(function ($transactions, $wId) use ($tanggalAwal, $tanggalAkhir) {
             $warung = $transactions->first()->warung;
             
             $operasional = PengeluaranOperasional::where('warung_id', $wId)
@@ -64,15 +64,7 @@ class LaporanController extends Controller
             
             $hariBuka = $transactions->where('status', 'buka')->count();
             $hariTutup = $transactions->where('status', 'tutup')->count();
-            
-            // Jika filter produk aktif, hitung omset dari subtotal produk tsb
-            if ($itemId) {
-                $filteredItems = $transactions->where('status', 'buka')->flatMap->transaksiItems->where('item_id', $itemId);
-                $omset = $filteredItems->sum('subtotal');
-            } else {
-                $omset = $transactions->sum('omset');
-            }
-            
+            $omset = $transactions->sum('omset');
             $profit = $omset - $operasional;
             $isTutup = ($hariBuka == 0 && $hariTutup > 0);
             
