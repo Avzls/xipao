@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Warung;
+use App\Models\Item;
 use App\Models\TransaksiHarian;
 use App\Models\TransaksiItem;
 use App\Models\PengeluaranOperasional;
@@ -17,7 +18,7 @@ class LaporanController extends Controller
     /**
      * Build laporan data: per-product and per-warung breakdown
      */
-    private function buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId = null)
+    private function buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId = null, $itemId = null)
     {
         $query = TransaksiHarian::with(['warung', 'transaksiItems.item'])
             ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
@@ -30,6 +31,11 @@ class LaporanController extends Controller
         
         // === Per-Product Breakdown ===
         $allItems = $transaksis->where('status', 'buka')->flatMap->transaksiItems;
+        
+        // Filter by product if specified
+        if ($itemId) {
+            $allItems = $allItems->where('item_id', $itemId);
+        }
         
         $produkData = $allItems->groupBy('item_id')->map(function ($items) {
             $first = $items->first();
@@ -85,14 +91,16 @@ class LaporanController extends Controller
     public function konsolidasi(Request $request)
     {
         $allWarungs = Warung::aktif()->orderBy('nama_warung')->get();
+        $allItems = Item::orderBy('nama_item')->get();
         
         $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
         $warungId = $request->input('warung_id');
+        $itemId = $request->input('item_id');
         
-        $data = $this->buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId);
+        $data = $this->buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId, $itemId);
         
-        return view('laporan.konsolidasi', array_merge($data, compact('tanggalAwal', 'tanggalAkhir', 'allWarungs', 'warungId')));
+        return view('laporan.konsolidasi', array_merge($data, compact('tanggalAwal', 'tanggalAkhir', 'allWarungs', 'allItems', 'warungId', 'itemId')));
     }
 
     public function exportExcel(Request $request)
@@ -100,10 +108,11 @@ class LaporanController extends Controller
         $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
         $warungId = $request->input('warung_id');
+        $itemId = $request->input('item_id');
         
         $filename = "laporan_{$tanggalAwal}_sd_{$tanggalAkhir}.xlsx";
         
-        return Excel::download(new LaporanExport($tanggalAwal, $tanggalAkhir, $warungId), $filename);
+        return Excel::download(new LaporanExport($tanggalAwal, $tanggalAkhir, $warungId, $itemId), $filename);
     }
 
     public function exportPdf(Request $request)
@@ -111,8 +120,9 @@ class LaporanController extends Controller
         $tanggalAwal = $request->input('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', Carbon::now()->format('Y-m-d'));
         $warungId = $request->input('warung_id');
+        $itemId = $request->input('item_id');
         
-        $data = $this->buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId);
+        $data = $this->buildLaporanData($tanggalAwal, $tanggalAkhir, $warungId, $itemId);
         
         $periodeLabel = Carbon::parse($tanggalAwal)->translatedFormat('d M Y') . ' - ' . Carbon::parse($tanggalAkhir)->translatedFormat('d M Y');
         

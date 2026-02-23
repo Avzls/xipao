@@ -4,13 +4,13 @@
 @section('page-subtitle', 'Ringkasan performa per produk & per warung')
 
 @section('header-actions')
-    <a href="{{ route('laporan.export.excel', ['tanggal_awal' => $tanggalAwal, 'tanggal_akhir' => $tanggalAkhir, 'warung_id' => $warungId]) }}" class="btn btn-success">
+    <a href="{{ route('laporan.export.excel', ['tanggal_awal' => $tanggalAwal, 'tanggal_akhir' => $tanggalAkhir, 'warung_id' => $warungId, 'item_id' => $itemId]) }}" class="btn btn-success">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
         </svg>
         Excel
     </a>
-    <a href="{{ route('laporan.export.pdf', ['tanggal_awal' => $tanggalAwal, 'tanggal_akhir' => $tanggalAkhir, 'warung_id' => $warungId]) }}" class="btn btn-danger">
+    <a href="{{ route('laporan.export.pdf', ['tanggal_awal' => $tanggalAwal, 'tanggal_akhir' => $tanggalAkhir, 'warung_id' => $warungId, 'item_id' => $itemId]) }}" class="btn btn-danger">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
         </svg>
@@ -34,6 +34,15 @@
                 </select>
             </div>
             <div>
+                <label class="form-label">Produk</label>
+                <select name="item_id" class="form-select">
+                    <option value="">Semua Produk</option>
+                    @foreach($allItems as $item)
+                        <option value="{{ $item->id }}" {{ $itemId == $item->id ? 'selected' : '' }}>{{ $item->nama_item }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
                 <label class="form-label">Tanggal Awal</label>
                 <input type="date" name="tanggal_awal" value="{{ $tanggalAwal }}" class="form-input">
             </div>
@@ -47,7 +56,7 @@
                 </svg>
                 Filter
             </button>
-            @if($warungId || request('tanggal_awal') || request('tanggal_akhir'))
+            @if($warungId || $itemId || request('tanggal_awal') || request('tanggal_akhir'))
                 <a href="{{ route('laporan.konsolidasi') }}" class="btn btn-secondary">Reset</a>
             @endif
         </form>

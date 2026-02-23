@@ -23,12 +23,14 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
     protected $tanggalAwal;
     protected $tanggalAkhir;
     protected $warungId;
+    protected $itemId;
 
-    public function __construct($tanggalAwal, $tanggalAkhir, $warungId = null)
+    public function __construct($tanggalAwal, $tanggalAkhir, $warungId = null, $itemId = null)
     {
         $this->tanggalAwal = $tanggalAwal;
         $this->tanggalAkhir = $tanggalAkhir;
         $this->warungId = $warungId;
+        $this->itemId = $itemId;
     }
 
     public function collection()
@@ -42,6 +44,11 @@ class LaporanExport implements FromCollection, WithHeadings, WithStyles, WithTit
         
         $transaksis = $query->get();
         $allItems = $transaksis->where('status', 'buka')->flatMap->transaksiItems;
+        
+        // Filter by product if specified
+        if ($this->itemId) {
+            $allItems = $allItems->where('item_id', $this->itemId);
+        }
         
         // Per-product rows
         $data = $allItems->groupBy('item_id')->map(function ($items) {
