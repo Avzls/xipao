@@ -64,7 +64,7 @@ class LaporanController extends Controller
             
             $hariBuka = $transactions->where('status', 'buka')->count();
             $hariTutup = $transactions->where('status', 'tutup')->count();
-            $omset = $transactions->sum('omset');
+            $omset = $transactions->where('status', 'buka')->flatMap->transaksiItems->sum('subtotal');
             $profit = $omset - $operasional;
             $isTutup = ($hariBuka == 0 && $hariTutup > 0);
             

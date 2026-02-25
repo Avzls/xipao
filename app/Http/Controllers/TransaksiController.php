@@ -94,23 +94,17 @@ class TransaksiController extends Controller
             'warung_id' => 'required|exists:warungs,id',
             'tanggal' => 'required|date',
             'status' => 'required|in:buka,tutup',
-            'cash' => 'required|numeric|min:0',
-            'modal' => 'required|numeric|min:0',
+            'cash' => 'nullable|numeric|min:0',
+            'modal' => 'nullable|numeric|min:0',
             'keterangan' => 'nullable|string',
             'items' => 'nullable|array',
-            'items.*.item_id' => 'required|exists:items,id',
-            'items.*.qty' => 'required|integer|min:1',
+            'items.*.item_id' => 'required_with:items|exists:items,id',
+            'items.*.qty' => 'required_with:items|integer|min:1',
         ]);
 
-        // Check duplicate
-        $exists = TransaksiHarian::where('warung_id', $validated['warung_id'])
-            ->whereDate('tanggal', $validated['tanggal'])
-            ->exists();
-        
-        if ($exists) {
-            return back()->withErrors(['tanggal' => 'Transaksi untuk warung dan tanggal ini sudah ada.'])
-                ->withInput();
-        }
+        // Default cash/modal to 0 if not provided (tutup)
+        $validated['cash'] = $validated['cash'] ?? 0;
+        $validated['modal'] = $validated['modal'] ?? 0;
 
         DB::transaction(function () use ($validated) {
             // Calculate dimsum_terjual for backward compat
