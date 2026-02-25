@@ -69,8 +69,8 @@
             <p class="stat-value text-lg text-purple-600">{{ number_format($produkTotals['qty'], 0, ',', '.') }} pcs</p>
         </div>
         <div class="stat-card">
-            <p class="stat-label">Omset Produk</p>
-            <p class="stat-value text-lg text-blue-600">Rp {{ number_format($produkTotals['omset'], 0, ',', '.') }}</p>
+            <p class="stat-label">Omset (Cash − Modal)</p>
+            <p class="stat-value text-lg text-blue-600">Rp {{ number_format($warungTotals['omset'], 0, ',', '.') }}</p>
         </div>
         <div class="stat-card">
             <p class="stat-label">Total Operasional</p>
@@ -93,7 +93,7 @@
                         <th>Produk</th>
                         <th>Harga Satuan</th>
                         <th>Qty Terjual</th>
-                        <th>Omset</th>
+                        <th>Penjualan</th>
                     </tr>
                 </thead>
                 <tbody>
