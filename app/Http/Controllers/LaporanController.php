@@ -64,19 +64,20 @@ class LaporanController extends Controller
             
             $hariBuka = $transactions->where('status', 'buka')->count();
             $hariTutup = $transactions->where('status', 'tutup')->count();
+            $omsetFull = $transactions->sum('omset');
             
             if ($itemId) {
-                // Filter produk aktif: omset = subtotal produk tsb saja
+                // Filter produk aktif: omset tampil = subtotal produk tsb
                 $omset = $transactions->where('status', 'buka')
                     ->flatMap->transaksiItems
                     ->where('item_id', $itemId)
                     ->sum('subtotal');
             } else {
-                // Semua produk: omset = cash - modal
-                $omset = $transactions->sum('omset');
+                $omset = $omsetFull;
             }
             
-            $profit = $omset - $operasional;
+            // Profit selalu pakai omset penuh (cash - modal)
+            $profit = $omsetFull - $operasional;
             $isTutup = ($hariBuka == 0 && $hariTutup > 0);
             
             return [
